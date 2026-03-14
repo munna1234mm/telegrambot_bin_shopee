@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bin Shopee - Verification</title>
+    <!-- Google Fonts for modern typography -->
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <!-- FontAwesome icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+    <div class="app-container">
+        <!-- Header -->
+        <header class="app-header">
+            <div class="logo">
+                <i class="fa-solid fa-bag-shopping"></i>
+                <h2>Bin Shopee</h2>
+            </div>
+            <p>Welcome to the official Mini App</p>
+        </header>
+
+        <!-- Main Content Area -->
+        <main class="app-content">
+            <!-- Step 1: Request Code -->
+            <section id="step1-request" class="auth-section card glassmorphism active">
+                <div class="icon-wrapper">
+                    <i class="fa-brands fa-telegram"></i>
+                </div>
+                <h3>Verify your Identity</h3>
+                <p class="subtitle">Enter your Telegram Chat ID to receive a verification code.</p>
+                <div class="input-group">
+                    <input type="number" id="chatIdInput" placeholder="e.g., 123456789">
+                    <label for="chatIdInput">Telegram Chat ID</label>
+                </div>
+                <button id="sendCodeBtn" class="btn btn-primary">
+                    <span>Send Verification Code</span>
+                    <i class="fa-solid fa-arrow-right"></i>
+                </button>
+                <div id="requestMsg" class="message"></div>
+                <div class="help-text">
+                    <button id="howToFindId" class="btn-text">How to find my Chat ID?</button>
+                </div>
+            </section>
+
+            <!-- Step 2: Verify Code -->
+            <section id="step2-verify" class="auth-section card glassmorphism">
+                <div class="icon-wrapper">
+                    <i class="fa-solid fa-shield-halved"></i>
+                </div>
+                <h3>Enter Code</h3>
+                <p class="subtitle">We've sent a 6-digit code to your Telegram bot.</p>
+                <div class="input-group">
+                    <input type="text" id="codeInput" placeholder="Enter 6-digit code" maxlength="6">
+                    <label for="codeInput">Verification Code</label>
+                </div>
+                <button id="verifyCodeBtn" class="btn btn-primary">
+                    <span>Verify Account</span>
+                    <i class="fa-solid fa-check"></i>
+                </button>
+                <div id="verifyMsg" class="message"></div>
+                <button id="resendCodeBtn" class="btn btn-secondary mt-3">Reset / Back</button>
+            </section>
+
+            <!-- Step 3: Dashboard -->
+            <section id="step3-dashboard" class="dashboard-section card glassmorphism">
+                <div class="success-banner">
+                    <i class="fa-solid fa-circle-check"></i>
+                    <h3>Verification Successful!</h3>
+                </div>
+                <div class="profile-card">
+                    <div class="avatar">
+                        <i class="fa-solid fa-user"></i>
+                    </div>
+                    <div class="user-info">
+                        <h4>User ID: <span id="displayUserId"></span></h4>
+                        <span class="badge">Verified Member</span>
+                    </div>
+                </div>
+                
+                <div class="features-grid">
+                    <div class="feature-item">
+                        <i class="fa-solid fa-cart-shopping"></i>
+                        <span>Shop</span>
+                    </div>
+                    <div class="feature-item">
+                        <i class="fa-solid fa-tags"></i>
+                        <span>Coupons</span>
+                    </div>
+                    <div class="feature-item">
+                        <i class="fa-solid fa-wallet"></i>
+                        <span>Wallet</span>
+                    </div>
+                    <div class="feature-item">
+                        <i class="fa-solid fa-headset"></i>
+                        <span>Support</span>
+                    </div>
+                </div>
+
+                <div class="announcement">
+                    <h5>Latest Update</h5>
+                    <p>Welcome to the new Bin Shopee experience. Stay tuned for upcoming shopping updates securely synced with your Telegram account!</p>
+                </div>
+            </section>
+        </main>
+
+        <!-- Help Modal -->
+        <div id="helpModal" class="modal">
+            <div class="modal-content glassmorphism">
+                <span class="close-btn">&times;</span>
+                <h4>Finding your Chat ID</h4>
+                <ol>
+                    <li>Open Telegram and search for our Bot.</li>
+                    <li>Send the <strong>/start</strong> command.</li>
+                    <li>The bot will reply with your Chat ID.</li>
+                    <li>Copy that ID and paste it here.</li>
+                </ol>
+            </div>
+        </div>
+    </div>
+
+    <script src="/js/app.js"></script>
+</body>
+</html>
