@@ -151,10 +151,13 @@
         <div class="admin-grid">
             <div class="sidebar glassmorphism">
                 <div class="menu-item active" data-target="updates-panel">
-                    <i class="fa-solid fa-cart-plus"></i> Add New Product
+                    <i class="fa-solid fa-box-open"></i> Manage Products
                 </div>
                 <div class="menu-item" data-target="users-panel">
                     <i class="fa-solid fa-users"></i> Manage Users
+                </div>
+                <div class="menu-item" data-target="settings-panel">
+                    <i class="fa-solid fa-gear"></i> Settings
                 </div>
                 <div class="menu-item" style="margin-top: auto; color: var(--error-color);">
                     <i class="fa-solid fa-right-from-bracket"></i> Logout
@@ -165,10 +168,11 @@
 
                 <!-- Updates Panel -->
                 <div id="updates-panel" class="panel-content active">
-                    <h3>Add New Product</h3>
-                    <p class="subtitle">Publish a new product to the Mini App dashboard.</p>
+                    <h3>Manage Products</h3>
+                    <p class="subtitle">Add new products or edit existing ones.</p>
 
                     <form id="updateForm" style="margin-top: 20px;">
+                        <input type="hidden" id="editProductId">
                         <div class="form-group">
                             <label for="updateTitle">Product Name *</label>
                             <input type="text" id="updateTitle" class="form-control"
@@ -198,11 +202,22 @@
                             <input type="text" id="updateCopyValue" class="form-control"
                                 placeholder="e.g., PROMO2024">
                         </div>
-                        <button type="submit" id="postBtn" class="btn btn-primary">
-                            <span>Publish Product</span> <i class="fa-solid fa-paper-plane"></i>
-                        </button>
+                        <div style="display: flex; gap: 10px;">
+                            <button type="submit" id="postBtn" class="btn btn-primary" style="flex: 1;">
+                                <span>Save Product</span> <i class="fa-solid fa-save"></i>
+                            </button>
+                            <button type="button" id="cancelEditBtn" class="btn btn-secondary" style="flex: 1; display: none;">
+                                Cancel Edit
+                            </button>
+                        </div>
                     </form>
                     <div id="postMsg" class="message"></div>
+                    
+                    <hr style="margin: 30px 0; border: none; border-top: 1px solid rgba(0,0,0,0.1);">
+                    <h3>Existing Products</h3>
+                    <ul class="user-list" id="adminProductsList">
+                        <li><i class="fa-solid fa-spinner fa-spin"></i> Loading products...</li>
+                    </ul>
                 </div>
 
                 <!-- Users Panel -->
@@ -216,6 +231,24 @@
                     <ul class="user-list" id="usersListContainer">
                         <li>Loading users...</li>
                     </ul>
+                </div>
+
+                <!-- Settings Panel -->
+                <div id="settings-panel" class="panel-content">
+                    <h3>App Settings</h3>
+                    <p class="subtitle">Configure global app mechanics.</p>
+                    
+                    <form id="settingsForm" style="margin-top: 20px;">
+                        <div class="form-group">
+                            <label for="referralBonusInput">Referral Bonus (USDT)</label>
+                            <input type="number" step="0.01" id="referralBonusInput" class="form-control" placeholder="0.00">
+                            <small style="color: var(--text-light); font-size: 0.8rem;">Amount awarded to a user when someone joins via their link.</small>
+                        </div>
+                        <button type="submit" id="saveSettingsBtn" class="btn btn-primary">
+                            <span>Save Settings</span> <i class="fa-solid fa-save"></i>
+                        </button>
+                    </form>
+                    <div id="settingsMsg" class="message"></div>
                 </div>
 
             </div>
@@ -238,9 +271,16 @@
 
                     if (item.dataset.target === 'users-panel') {
                         loadUsers();
+                    } else if (item.dataset.target === 'settings-panel') {
+                        loadSettings();
+                    } else if (item.dataset.target === 'updates-panel') {
+                        loadAdminProducts();
                     }
                 });
             });
+            
+            // Initial load
+            loadAdminProducts();
 
             // Add Item Submit
             const updateForm = document.getElementById('updateForm');
@@ -288,8 +328,17 @@
                 });
             }
 
+            const cancelEditBtn = document.getElementById('cancelEditBtn');
+            cancelEditBtn.addEventListener('click', () => {
+                updateForm.reset();
+                document.getElementById('editProductId').value = '';
+                cancelEditBtn.style.display = 'none';
+                postBtn.innerHTML = '<span>Save Product</span> <i class="fa-solid fa-save"></i>';
+            });
+
             updateForm.addEventListener('submit', async (e) => {
                 e.preventDefault();
+                const id = document.getElementById('editProductId').value;
                 const name = document.getElementById('updateTitle').value.trim();
                 const price = document.getElementById('updatePrice').value.trim();
                 const imageFile = document.getElementById('updateImageFile').files[0];
@@ -312,8 +361,11 @@
 
                     postBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Uploading...';
 
-                    const res = await fetch('/api/admin/items', {
-                        method: 'POST',
+                    const endpoint = id ? `/api/admin/items/${id}` : '/api/admin/items';
+                    const method = id ? 'PUT' : 'POST';
+
+                    const res = await fetch(endpoint, {
+                        method: method,
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({ name, price, description, copyBtnText, copyBtnValue, imageUrl })
                     });
@@ -321,12 +373,17 @@
 
                     postMsg.textContent = data.message;
                     postMsg.className = data.success ? 'message success' : 'message error';
-                    if (data.success) updateForm.reset();
+                    if (data.success) {
+                        updateForm.reset();
+                        document.getElementById('editProductId').value = '';
+                        cancelEditBtn.style.display = 'none';
+                        loadAdminProducts();
+                    }
                 } catch (error) {
-                    postMsg.textContent = 'Error adding product.';
+                    postMsg.textContent = 'Error saving product.';
                     postMsg.className = 'message error';
                 } finally {
-                    postBtn.innerHTML = '<span>Publish Product</span> <i class="fa-solid fa-paper-plane"></i>';
+                    postBtn.innerHTML = '<span>Save Product</span> <i class="fa-solid fa-save"></i>';
                     postBtn.disabled = false;
                 }
             });
@@ -368,6 +425,99 @@
                     container.innerHTML = '<li style="color:red;">Error loading users. Check console.</li>';
                 }
             }
+            
+            // Admin Products Logic
+            window.loadAdminProducts = async function() {
+                const container = document.getElementById('adminProductsList');
+                container.innerHTML = '<li><i class="fa-solid fa-spinner fa-spin"></i> Loading...</li>';
+                try {
+                    const res = await fetch('/api/items');
+                    const data = await res.json();
+                    if (data.success && data.items.length > 0) {
+                        container.innerHTML = '';
+                        data.items.forEach(item => {
+                            const li = document.createElement('li');
+                            li.className = 'user-item';
+                            li.innerHTML = `
+                                ${item.imageUrl ? `<img src="${item.imageUrl}" alt="Img">` : '<div style="width:50px;height:50px;background:#eee;border-radius:10px;"></div>'}
+                                <div class="user-details" style="flex:1;">
+                                    <h5>${item.name}</h5>
+                                    <p>${item.price} USDT</p>
+                                </div>
+                                <div style="display:flex;gap:5px;">
+                                    <button class="btn btn-primary" onclick="editProduct('${item.id}', '${(item.name || '').replace(/'/g, "\\'")}', '${item.price}', '${(item.description || '').replace(/'/g, "\\'")}', '${(item.copyBtnText || '').replace(/'/g, "\\'")}', '${(item.copyBtnValue || '').replace(/'/g, "\\'")}')" style="padding: 5px 10px; font-size: 0.8rem; width:auto;"><i class="fa-solid fa-pen"></i></button>
+                                    <button class="btn btn-secondary" onclick="deleteProduct('${item.id}')" style="padding: 5px 10px; font-size: 0.8rem; width:auto; border-color:var(--error-color); color:var(--error-color);"><i class="fa-solid fa-trash"></i></button>
+                                </div>
+                            `;
+                            container.appendChild(li);
+                        });
+                    } else {
+                        container.innerHTML = '<li>No products active.</li>';
+                    }
+                } catch {
+                    container.innerHTML = '<li style="color:red;">Error loading products.</li>';
+                }
+            };
+
+            window.editProduct = function(id, name, price, desc, btnText, btnVal) {
+                document.getElementById('editProductId').value = id;
+                document.getElementById('updateTitle').value = name;
+                document.getElementById('updatePrice').value = price;
+                document.getElementById('updateContent').value = desc;
+                document.getElementById('updateCopyText').value = btnText;
+                document.getElementById('updateCopyValue').value = btnVal;
+                document.getElementById('cancelEditBtn').style.display = 'block';
+                window.scrollTo({top: 0, behavior: 'smooth'});
+            };
+
+            window.deleteProduct = async function(id) {
+                if(!confirm('Are you sure you want to delete this product?')) return;
+                try {
+                    const res = await fetch('/api/admin/items/' + id, { method: 'DELETE' });
+                    const data = await res.json();
+                    if(data.success) loadAdminProducts();
+                    else alert('Error: ' + data.message);
+                } catch(e) {
+                    alert('Request failed');
+                }
+            };
+
+            // Settings Logic
+            const settingsForm = document.getElementById('settingsForm');
+            const saveSettingsBtn = document.getElementById('saveSettingsBtn');
+            const settingsMsg = document.getElementById('settingsMsg');
+
+            async function loadSettings() {
+                try {
+                    const res = await fetch('/api/admin/settings');
+                    const data = await res.json();
+                    if(data.success) {
+                        document.getElementById('referralBonusInput').value = data.settings.referralBonus || 0;
+                    }
+                } catch(e) {}
+            }
+
+            settingsForm.addEventListener('submit', async (e) => {
+                e.preventDefault();
+                saveSettingsBtn.disabled = true;
+                saveSettingsBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Saving...';
+                try {
+                    const res = await fetch('/api/admin/settings', {
+                        method: 'POST',
+                        headers: {'Content-Type': 'application/json'},
+                        body: JSON.stringify({referralBonus: document.getElementById('referralBonusInput').value})
+                    });
+                    const data = await res.json();
+                    settingsMsg.textContent = data.message;
+                    settingsMsg.className = data.success ? 'message success' : 'message error';
+                } catch(e) {
+                    settingsMsg.textContent = 'Error saving';
+                    settingsMsg.className = 'message error';
+                } finally {
+                    saveSettingsBtn.disabled = false;
+                    saveSettingsBtn.innerHTML = '<span>Save Settings</span> <i class="fa-solid fa-save"></i>';
+                }
+            });
         });
     </script>
 </body>

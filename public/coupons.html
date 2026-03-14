@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bin Shopee - Coupons</title>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="./css/style.css">
+    <style>
+        .page-header {
+            display: flex;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+        .back-btn {
+            background: none;
+            border: none;
+            font-size: 1.5rem;
+            color: var(--text-color);
+            cursor: pointer;
+            margin-right: 15px;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="app-container">
+        <main class="app-content">
+            <section class="dashboard-section card glassmorphism" style="display: flex;">
+                <div class="page-header">
+                    <button class="back-btn" onclick="window.location.href='index.html'">
+                        <i class="fa-solid fa-arrow-left"></i>
+                    </button>
+                    <h2>Coupons</h2>
+                </div>
+
+                <div style="text-align: center; padding: 40px 20px; color: var(--text-light);">
+                    <i class="fa-solid fa-tags" style="font-size: 3rem; color: #ccc; margin-bottom: 15px;"></i>
+                    <h3>No Active Coupons</h3>
+                    <p style="font-size: 0.9rem; margin-top: 10px;">Check back later for exclusive deals and discounts!</p>
+                </div>
+            </section>
+        </main>
+    </div>
+</body>
+</html>

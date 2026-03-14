@@ -95,11 +95,11 @@
                 </div>
 
                 <div class="features-grid">
-                    <div class="feature-item">
+                    <div class="feature-item" onclick="window.location.href='shop.html'">
                         <i class="fa-solid fa-cart-shopping"></i>
                         <span>Shop</span>
                     </div>
-                    <div class="feature-item">
+                    <div class="feature-item" onclick="window.location.href='coupons.html'">
                         <i class="fa-solid fa-tags"></i>
                         <span>Coupons</span>
                     </div>
@@ -107,7 +107,7 @@
                         <i class="fa-solid fa-wallet"></i>
                         <span>Wallet</span>
                     </div>
-                    <div class="feature-item">
+                    <div class="feature-item" onclick="window.location.href='support.html'">
                         <i class="fa-solid fa-headset"></i>
                         <span>Support</span>
                     </div>
@@ -115,13 +115,14 @@
 
                 <!-- Products will follow directly -->
 
-                <div class="products-section mt-3">
-                    <h3 style="font-size: 1.2rem; margin-bottom: 15px; border-bottom: 2px solid var(--primary-color); display: inline-block;">Available Products</h3>
-                    <div id="productsList" class="products-list">
-                        <!-- Products will be loaded here dynamically -->
-                        <div style="text-align: center; color: var(--text-light); padding: 20px;">
-                            <i class="fa-solid fa-spinner fa-spin"></i> Loading Products...
-                        </div>
+                <div class="referral-section mt-3" style="background: rgba(255, 255, 255, 0.8); border-radius: 15px; padding: 20px; text-align: center;">
+                    <i class="fa-solid fa-gift" style="font-size: 2rem; color: var(--primary-color); margin-bottom: 10px;"></i>
+                    <h3 style="font-size: 1.1rem; margin-bottom: 5px;">Refer & Earn!</h3>
+                    <p style="font-size: 0.8rem; color: var(--text-light); margin-bottom: 15px;">Share your link with friends to earn USDT bonuses when they join.</p>
+                    
+                    <div style="display: flex; gap: 10px;">
+                        <input type="text" id="displayReferralLink" class="form-control" readonly style="font-size: 0.8rem; padding: 10px; flex: 1;">
+                        <button class="btn btn-primary" onclick="copyReferralLink()" style="width: auto; padding: 10px 15px;"><i class="fa-regular fa-copy"></i></button>
                     </div>
                 </div>
             </section>

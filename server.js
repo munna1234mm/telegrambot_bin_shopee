@@ -15,7 +15,7 @@ const bot = new TelegramBot(botToken, { polling: true });
 
 // Initialize Firebase
 const { initializeApp } = require('firebase/app');
-const { getFirestore, doc, setDoc, getDoc, collection, getDocs } = require('firebase/firestore/lite');
+const { getFirestore, doc, setDoc, getDoc, collection, getDocs, deleteDoc } = require('firebase/firestore/lite');
 
 const firebaseConfig = {
     apiKey: "AIzaSyA98AqgNgh67RBCuxh6ee_j0Lh5udTMHj0",
@@ -55,8 +55,9 @@ function generateCode() {
 }
 
 // Bot /start handling
-bot.onText(/\/start/, async (msg) => {
+bot.onText(/\/start(?:\s+(.*))?/, async (msg, match) => {
     const chatId = msg.chat.id;
+    const referrerId = match[1];
     const firstName = msg.from.first_name || 'Unknown';
     const lastName = msg.from.last_name || '';
     const fullName = `${firstName} ${lastName}`.trim();
@@ -78,16 +79,38 @@ bot.onText(/\/start/, async (msg) => {
         console.error('Error fetching profile photo:', error.message);
     }
 
-    // Save to Firebase (merging if exists)
+    // Save to Firebase and handle Referral
     try {
-        await setDoc(doc(db, "users", chatId.toString()), {
+        const userRef = doc(db, "users", chatId.toString());
+        const userSnap = await getDoc(userRef);
+        const isNewUser = !userSnap.exists();
+        
+        await setDoc(userRef, {
             chatId: chatId,
             name: fullName,
             photoUrl: photoUrl,
             verified: false,
-            balance: 0,
+            balance: isNewUser ? 0 : (userSnap.data().balance || 0),
             lastActive: new Date().toISOString()
         }, { merge: true });
+
+        // Process referral if new user and referrer exists
+        if (isNewUser && referrerId && referrerId !== chatId.toString()) {
+            const settingsSnap = await getDoc(doc(db, 'settings', 'global'));
+            const bonus = settingsSnap.exists() ? (settingsSnap.data().referralBonus || 0) : 0;
+            
+            if (bonus > 0) {
+                const referrerRef = doc(db, 'users', referrerId.toString());
+                const referrerSnap = await getDoc(referrerRef);
+                if (referrerSnap.exists()) {
+                    const newBalance = (referrerSnap.data().balance || 0) + bonus;
+                    await setDoc(referrerRef, { balance: newBalance }, { merge: true });
+                    bot.sendMessage(referrerId, `🎉 You referred a friend! You have earned ${bonus} USDT.`);
+                    
+                    // Also give starting bonus to new user? Not requested, so skipping.
+                }
+            }
+        }
     } catch (error) {
         console.error('Error saving user to Firebase:', error.message);
     }
@@ -252,12 +275,66 @@ app.post('/api/admin/items', async (req, res) => {
     }
 });
 
+app.put('/api/admin/items/:id', async (req, res) => {
+    const { id } = req.params;
+    const { name, price, description, copyBtnText, copyBtnValue, imageUrl } = req.body;
+    
+    try {
+        const itemRef = doc(db, 'items', id);
+        let updateData = {
+            name,
+            price: parseFloat(price),
+            description: description || '',
+            copyBtnText: copyBtnText || '',
+            copyBtnValue: copyBtnValue || '',
+            updatedAt: new Date().toISOString()
+        };
+        if (imageUrl) updateData.imageUrl = imageUrl;
+
+        await setDoc(itemRef, updateData, { merge: true });
+        res.json({ success: true, message: 'Product updated successfully' });
+    } catch (error) {
+        res.status(500).json({ success: false, message: 'Failed to update item' });
+    }
+});
+
+app.delete('/api/admin/items/:id', async (req, res) => {
+    const { id } = req.params;
+    try {
+        await deleteDoc(doc(db, 'items', id));
+        res.json({ success: true, message: 'Product deleted successfully' });
+    } catch (error) {
+        res.status(500).json({ success: false, message: 'Failed to delete item' });
+    }
+});
+
+app.get('/api/admin/settings', async (req, res) => {
+    try {
+        const settingsSnap = await getDoc(doc(db, 'settings', 'global'));
+        let settings = settingsSnap.exists() ? settingsSnap.data() : { referralBonus: 0 };
+        res.json({ success: true, settings });
+    } catch (error) {
+        res.status(500).json({ success: false, message: 'Failed to fetch settings' });
+    }
+});
+
+app.post('/api/admin/settings', async (req, res) => {
+    const { referralBonus } = req.body;
+    try {
+        await setDoc(doc(db, 'settings', 'global'), { referralBonus: parseFloat(referralBonus || 0) }, { merge: true });
+        res.json({ success: true, message: 'Settings saved successfully' });
+    } catch (error) {
+        res.status(500).json({ success: false, message: 'Failed to save settings' });
+    }
+});
+
 // API endpoint to fetch items for users
 app.get('/api/items', async (req, res) => {
     try {
         const itemsCol = collection(db, 'items');
         const itemSnapshot = await getDocs(itemsCol);
-        const itemsList = itemSnapshot.docs.map(doc => doc.data()).sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+        // Include doc ID back to UI
+        const itemsList = itemSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })).sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
         res.json({ success: true, items: itemsList });
     } catch (error) {
         res.status(500).json({ success: false, message: 'Failed to fetch items' });

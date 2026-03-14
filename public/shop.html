@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bin Shopee - Shop</title>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="./css/style.css">
+    <style>
+        .page-header {
+            display: flex;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .back-btn {
+            background: none;
+            border: none;
+            font-size: 1.5rem;
+            color: var(--text-color);
+            cursor: pointer;
+            margin-right: 15px;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="app-container">
+        <main class="app-content">
+            <section class="dashboard-section card glassmorphism" style="display: flex;">
+                <div class="page-header">
+                    <button class="back-btn" onclick="window.location.href='index.html'">
+                        <i class="fa-solid fa-arrow-left"></i>
+                    </button>
+                    <h2>Shop</h2>
+                </div>
+
+                <div class="products-section mt-3">
+                    <div id="productsList" class="products-list">
+                        <div style="text-align: center; color: var(--text-light); padding: 20px;">
+                            <i class="fa-solid fa-spinner fa-spin"></i> Loading Products...
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <!-- Minimal Script to Load Products -->
+    <script>
+        document.addEventListener('DOMContentLoaded', loadProducts);
+
+        async function loadProducts() {
+            const productsList = document.getElementById('productsList');
+            try {
+                const res = await fetch('/api/items');
+                const data = await res.json();
+                
+                if (data.success && data.items.length > 0) {
+                    productsList.innerHTML = '';
+                    data.items.forEach(item => {
+                        const price = item.price ? parseFloat(item.price).toFixed(2) : '0.00';
+                        const imageHtml = item.imageUrl ? `<img class="product-image" src="${item.imageUrl}" alt="${item.name}">` : '';
+
+                        let actionsHtml = '';
+                        if (item.copyBtnText && item.copyBtnValue) {
+                            actionsHtml = `
+                            <div class="product-actions">
+                                <button class="btn-copy" onclick="navigator.clipboard.writeText('${item.copyBtnValue.replace(/'/g, "\\'")}').then(() => alert('Copied!'))">
+                                    <i class="fa-regular fa-copy"></i> ${item.copyBtnText}
+                                </button>
+                            </div>`;
+                        }
+
+                        const productHtml = `
+                        <div class="product-card">
+                            ${imageHtml}
+                            <div class="product-details">
+                                <div style="display: flex; justify-content: space-between; align-items: start;">
+                                    <div class="product-title">${item.name}</div>
+                                    <div class="product-price">${price} <span style="font-size: 0.8rem; color: var(--text-light); font-weight: normal;">USDT</span></div>
+                                </div>
+                                <div class="product-description">${item.description}</div>
+                                ${actionsHtml}
+                            </div>
+                        </div>
+                        `;
+                        productsList.innerHTML += productHtml;
+                    });
+                } else {
+                    productsList.innerHTML = '<div style="text-align: center; color: var(--text-light); padding: 20px;">No products available yet.</div>';
+                }
+            } catch (error) {
+                productsList.innerHTML = '<div style="text-align: center; color: var(--error-color); padding: 20px;">Error loading products.</div>';
+            }
+        }
+    </script>
+</body>
+
+</html>
