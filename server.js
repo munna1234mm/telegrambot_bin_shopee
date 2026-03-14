@@ -174,6 +174,19 @@ app.post('/api/verify-code', async (req, res) => {
                     } else {
                         userData.photoUrl = 'https://ui-avatars.com/api/?name=' + encodeURIComponent(userData.name) + '&background=random';
                     }
+
+                    // Save this fetched data back into Firebase permanently!
+                    try {
+                        await setDoc(userRef, {
+                            chatId: chatId,
+                            name: userData.name,
+                            photoUrl: userData.photoUrl,
+                            lastActive: new Date().toISOString()
+                        }, { merge: true });
+                        console.log("Successfully retroactively saved missing user data to Firebase!");
+                    } catch (fbErr) {
+                        console.error('Retroactive Firebase save failed. Is database enabled?', fbErr.message);
+                    }
                 } catch (fallbackErr) {
                     console.error('Fallback Telegram fetch failed:', fallbackErr.message);
                 }
