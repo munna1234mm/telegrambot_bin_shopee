@@ -15,7 +15,7 @@ const bot = new TelegramBot(botToken, { polling: true });
 
 // Initialize Firebase
 const { initializeApp } = require('firebase/app');
-const { getFirestore, doc, setDoc, getDoc, collection, getDocs } = require('firebase/firestore');
+const { getFirestore, doc, setDoc, getDoc, collection, getDocs } = require('firebase/firestore/lite');
 
 const firebaseConfig = {
     apiKey: "AIzaSyA98AqgNgh67RBCuxh6ee_j0Lh5udTMHj0",
