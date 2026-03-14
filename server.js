@@ -18,6 +18,16 @@ app.use(cors());
 app.use(bodyParser.json());
 app.use(express.static(path.join(__dirname, 'public')));
 
+// Explicit route for the Mini App homepage
+app.get('/', (req, res) => {
+    res.sendFile(path.join(__dirname, 'public', 'index.html'));
+});
+
+// Explicit route for the Admin panel
+app.get('/admin', (req, res) => {
+    res.sendFile(path.join(__dirname, 'public', 'admin.html'));
+});
+
 // In-memory store for verification codes (for production, use a database or Redis)
 const verificationCodes = new Map();
 
@@ -45,11 +55,11 @@ app.post('/api/send-code', async (req, res) => {
         // Save code with 5 mins expiration
         verificationCodes.set(chatId.toString(), {
             code,
-            expires: Date.now() + 5 * 60 * 1000 
+            expires: Date.now() + 5 * 60 * 1000
         });
 
         await bot.sendMessage(chatId, `Your verification code for bin shopee Mini App is: ${code}\nThis code will expire in 5 minutes.`);
-        
+
         res.json({ success: true, message: 'Code sent to your Telegram' });
     } catch (error) {
         console.error('Error sending message:', error.message);
@@ -79,7 +89,7 @@ app.post('/api/verify-code', (req, res) => {
     if (storedData.code === code.trim()) {
         // Code is correct
         verificationCodes.delete(chatId.toString());
-        
+
         // Let admin know someone verified (optional)
         bot.sendMessage(adminChatId, `User ${chatId} has successfully verified via Mini App.`);
 
