@@ -148,11 +148,35 @@ app.post('/api/verify-code', async (req, res) => {
             await setDoc(userRef, { verified: true }, { merge: true });
 
             // Getting full user info to send to frontend
-            const userSnap = await getDoc(userRef);
             let userData = { name: "User", photoUrl: "" };
+            try {
+                const userSnap = await getDoc(userRef);
+                if (userSnap.exists()) {
+                    userData = userSnap.data();
+                }
+            } catch (e) {
+                console.error("Failed to read user from Firebase:", e.message);
+            }
 
-            if (userSnap.exists()) {
-                userData = userSnap.data();
+            // Fallback: If Firebase failed or user data wasn't saved, fetch directly from Telegram
+            if (!userData.photoUrl || userData.name === "User") {
+                try {
+                    const chatInfo = await bot.getChat(chatId);
+                    const firstName = chatInfo.first_name || 'User';
+                    const lastName = chatInfo.last_name || '';
+                    userData.name = `${firstName} ${lastName}`.trim();
+
+                    const photos = await bot.getUserProfilePhotos(chatId, { limit: 1 });
+                    if (photos && photos.total_count > 0) {
+                        const photoSizes = photos.photos[0];
+                        const bestPhoto = photoSizes[photoSizes.length - 1];
+                        userData.photoUrl = await bot.getFileLink(bestPhoto.file_id);
+                    } else {
+                        userData.photoUrl = 'https://ui-avatars.com/api/?name=' + encodeURIComponent(userData.name) + '&background=random';
+                    }
+                } catch (fallbackErr) {
+                    console.error('Fallback Telegram fetch failed:', fallbackErr.message);
+                }
             }
 
             // Let admin know someone verified (optional)
