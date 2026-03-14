@@ -389,6 +389,44 @@ body {
     to { transform: rotate(360deg); }
 }
 
+/* Features Grid */
+.features-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 15px;
+    margin-top: 5px;
+}
+
+.feature-item {
+    background: rgba(255, 255, 255, 0.8);
+    padding: 25px 20px;
+    border-radius: 16px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+    cursor: pointer;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+    text-decoration: none;
+    color: var(--text-color);
+    box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+}
+
+.feature-item i {
+    font-size: 2.5rem;
+    color: var(--primary-color);
+}
+
+.feature-item span {
+    font-weight: 600;
+    font-size: 1.1rem;
+}
+
+.feature-item:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 8px 25px rgba(0,136,204,0.15);
+}
+
 /* Products Section */
 .products-list {
     display: flex;
