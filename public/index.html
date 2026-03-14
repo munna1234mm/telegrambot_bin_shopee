@@ -83,6 +83,12 @@
                                 id="displayUserId"></span></p>
                         <span class="badge">Verified Member</span>
                     </div>
+                    <div class="balance-info" style="margin-left: auto; text-align: right;">
+                        <span style="font-size: 0.8rem; color: var(--text-light);">Balance</span>
+                        <div style="font-weight: bold; color: var(--success-color); font-size: 1.1rem;">
+                            <span id="displayUserBalance">0.00</span> <span style="font-size:0.8rem;">USDT</span>
+                        </div>
+                    </div>
                 </div>
 
                 <div class="features-grid">
@@ -108,6 +114,16 @@
                     <h5>Latest Update</h5>
                     <p>Welcome to the new Bin Shopee experience. Stay tuned for upcoming shopping updates securely
                         synced with your Telegram account!</p>
+                </div>
+
+                <div class="products-section mt-3">
+                    <h3 style="font-size: 1.2rem; margin-bottom: 15px; border-bottom: 2px solid var(--primary-color); display: inline-block;">Available Products</h3>
+                    <div id="productsList" class="products-list">
+                        <!-- Products will be loaded here dynamically -->
+                        <div style="text-align: center; color: var(--text-light); padding: 20px;">
+                            <i class="fa-solid fa-spinner fa-spin"></i> Loading Products...
+                        </div>
+                    </div>
                 </div>
             </section>
         </main>

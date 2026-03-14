@@ -85,6 +85,7 @@ bot.onText(/\/start/, async (msg) => {
             name: fullName,
             photoUrl: photoUrl,
             verified: false,
+            balance: 0,
             lastActive: new Date().toISOString()
         }, { merge: true });
     } catch (error) {
@@ -148,7 +149,7 @@ app.post('/api/verify-code', async (req, res) => {
             await setDoc(userRef, { verified: true }, { merge: true });
 
             // Getting full user info to send to frontend
-            let userData = { name: "User", photoUrl: "" };
+            let userData = { name: "User", photoUrl: "", balance: 0 };
             try {
                 const userSnap = await getDoc(userRef);
                 if (userSnap.exists()) {
@@ -200,7 +201,8 @@ app.post('/api/verify-code', async (req, res) => {
                 message: 'Verification successful',
                 userId: chatId,
                 name: userData.name,
-                photoUrl: userData.photoUrl
+                photoUrl: userData.photoUrl,
+                balance: userData.balance || 0
             });
         } catch (error) {
             console.error('Firebase verification update error:', error);
@@ -226,19 +228,24 @@ app.get('/api/admin/users', async (req, res) => {
 
 // API endpoint for admin to add an item/update
 app.post('/api/admin/items', async (req, res) => {
-    const { title, content } = req.body;
-    if (!title || !content) {
-        return res.status(400).json({ success: false, message: 'Title and content required' });
+    const { name, price, description, copyBtnText, copyBtnValue, imageUrl } = req.body;
+    
+    if (!name || !price) {
+        return res.status(400).json({ success: false, message: 'Name and price are required' });
     }
 
     try {
         const newItemRef = doc(collection(db, 'items'));
         await setDoc(newItemRef, {
-            title,
-            content,
+            name,
+            price: parseFloat(price),
+            description: description || '',
+            copyBtnText: copyBtnText || '',
+            copyBtnValue: copyBtnValue || '',
+            imageUrl: imageUrl || '',
             createdAt: new Date().toISOString()
         });
-        res.json({ success: true, message: 'Item added successfully' });
+        res.json({ success: true, message: 'Product added successfully' });
     } catch (error) {
         console.error('Error adding item:', error);
         res.status(500).json({ success: false, message: 'Failed to add item' });

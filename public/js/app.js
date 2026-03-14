@@ -25,6 +25,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const storedUserId = localStorage.getItem('userId');
     const storedUserName = localStorage.getItem('userName');
     const storedPhotoUrl = localStorage.getItem('photoUrl');
+    const storedBalance = localStorage.getItem('balance') || '0';
 
     if (storedUserId) {
         sectionRequest.classList.remove('active');
@@ -32,6 +33,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
         document.getElementById('displayUserId').textContent = storedUserId;
         document.getElementById('displayUserName').textContent = storedUserName || 'User';
+        document.getElementById('displayUserBalance').textContent = parseFloat(storedBalance).toFixed(2);
+
+        loadProducts();
 
         if (storedPhotoUrl && storedPhotoUrl !== 'undefined' && storedPhotoUrl !== 'null') {
             const avatarImg = document.getElementById('userAvatar');
@@ -113,6 +117,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 // Save session to localStorage
                 localStorage.setItem('userId', data.userId);
                 localStorage.setItem('userName', data.name || 'User');
+                localStorage.setItem('balance', data.balance || 0);
                 if (data.photoUrl) {
                     localStorage.setItem('photoUrl', data.photoUrl);
                 }
@@ -122,6 +127,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
                 document.getElementById('displayUserId').textContent = data.userId;
                 document.getElementById('displayUserName').textContent = data.name || 'User';
+                document.getElementById('displayUserBalance').textContent = parseFloat(data.balance || 0).toFixed(2);
+                
+                loadProducts();
 
                 if (data.photoUrl) {
                     const avatarImg = document.getElementById('userAvatar');
@@ -148,6 +156,52 @@ document.addEventListener('DOMContentLoaded', () => {
         verifyMsg.className = 'message';
         verifyMsg.textContent = '';
     });
+
+    // Load Products
+    async function loadProducts() {
+        const productsList = document.getElementById('productsList');
+        try {
+            const res = await fetch('/api/items');
+            const data = await res.json();
+            
+            if (data.success && data.items.length > 0) {
+                productsList.innerHTML = '';
+                data.items.forEach(item => {
+                    const price = item.price ? parseFloat(item.price).toFixed(2) : '0.00';
+                    const imageHtml = item.imageUrl ? `<img class="product-image" src="${item.imageUrl}" alt="${item.name}">` : '';
+
+                    let actionsHtml = '';
+                    if (item.copyBtnText && item.copyBtnValue) {
+                        actionsHtml = `
+                        <div class="product-actions">
+                            <button class="btn-copy" onclick="navigator.clipboard.writeText('${item.copyBtnValue.replace(/'/g, "\\'")}').then(() => alert('Copied!'))">
+                                <i class="fa-regular fa-copy"></i> ${item.copyBtnText}
+                            </button>
+                        </div>`;
+                    }
+
+                    const productHtml = `
+                    <div class="product-card">
+                        ${imageHtml}
+                        <div class="product-details">
+                            <div style="display: flex; justify-content: space-between; align-items: start;">
+                                <div class="product-title">${item.name}</div>
+                                <div class="product-price">${price} <span style="font-size: 0.8rem; color: var(--text-light); font-weight: normal;">USDT</span></div>
+                            </div>
+                            <div class="product-description">${item.description}</div>
+                            ${actionsHtml}
+                        </div>
+                    </div>
+                    `;
+                    productsList.innerHTML += productHtml;
+                });
+            } else {
+                productsList.innerHTML = '<div style="text-align: center; color: var(--text-light); padding: 20px;">No products available yet.</div>';
+            }
+        } catch (error) {
+            productsList.innerHTML = '<div style="text-align: center; color: var(--error-color); padding: 20px;">Error loading products.</div>';
+        }
+    }
 
     // Helper functions
     function showMessage(element, text, type) {
