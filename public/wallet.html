@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bin Shopee - Wallet</title>
+    <!-- Google Fonts for modern typography -->
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <!-- FontAwesome icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="./css/style.css">
+    <style>
+        .page-header {
+            display: flex;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .back-btn {
+            background: none;
+            border: none;
+            font-size: 1.5rem;
+            color: var(--text-color);
+            cursor: pointer;
+            margin-right: 15px;
+        }
+
+        .withdraw-section {
+            background: rgba(255, 255, 255, 0.8);
+            border-radius: 15px;
+            padding: 20px;
+        }
+
+        .method-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 15px;
+            border-bottom: 1px solid rgba(0,0,0,0.05);
+            cursor: pointer;
+            transition: background 0.2s ease;
+        }
+
+        .method-item:hover {
+            background: rgba(0, 136, 204, 0.05);
+        }
+
+        .method-item:last-child {
+            border-bottom: none;
+        }
+
+        .method-info {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .method-icon {
+            font-size: 1.5rem;
+            color: var(--primary-color);
+            width: 40px;
+            text-align: center;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="app-container">
+        
+        <main class="app-content">
+            <section class="dashboard-section card glassmorphism" style="display: flex;">
+                <div class="page-header">
+                    <button class="back-btn" onclick="window.location.href='index.html'">
+                        <i class="fa-solid fa-arrow-left"></i>
+                    </button>
+                    <h2>My Wallet</h2>
+                </div>
+
+                <!-- Premium Balance Card (Reused from Dashboard) -->
+                <div class="balance-card-premium">
+                    <div class="user-top-row" style="margin-bottom: 10px;">
+                        <div class="user-info-basic">
+                            <span class="user-name-text">Available to withdraw</span>
+                        </div>
+                    </div>
+                    
+                    <div class="balance-main">
+                        <div class="balance-amount">
+                            <span class="currency">USDT</span>
+                            <span id="displayUserBalance" class="amount-number">0.00</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="withdraw-section mt-3">
+                    <h3 style="font-size: 1.1rem; margin-bottom: 15px;">Withdrawal Methods</h3>
+                    
+                    <div class="method-item" onclick="handleWithdraw('Crypto (USDT)')">
+                        <div class="method-info">
+                            <div class="method-icon"><i class="fa-brands fa-bitcoin"></i></div>
+                            <div>
+                                <h4 style="font-size: 1rem;">Crypto (USDT TRC20)</h4>
+                                <span style="font-size: 0.8rem; color: var(--text-light);">Instant</span>
+                            </div>
+                        </div>
+                        <i class="fa-solid fa-chevron-right" style="color: var(--text-light);"></i>
+                    </div>
+
+                    <div class="method-item" onclick="handleWithdraw('bKash')">
+                        <div class="method-info">
+                            <div class="method-icon"><i class="fa-solid fa-mobile-screen-button"></i></div>
+                            <div>
+                                <h4 style="font-size: 1rem;">bKash</h4>
+                                <span style="font-size: 0.8rem; color: var(--text-light);">Local Mobile Banking</span>
+                            </div>
+                        </div>
+                        <i class="fa-solid fa-chevron-right" style="color: var(--text-light);"></i>
+                    </div>
+
+                    <div class="method-item" onclick="handleWithdraw('Nagad')">
+                        <div class="method-info">
+                            <div class="method-icon"><i class="fa-solid fa-mobile-screen-button" style="color: #ed1c24;"></i></div>
+                            <div>
+                                <h4 style="font-size: 1rem;">Nagad</h4>
+                                <span style="font-size: 0.8rem; color: var(--text-light);">Local Mobile Banking</span>
+                            </div>
+                        </div>
+                        <i class="fa-solid fa-chevron-right" style="color: var(--text-light);"></i>
+                    </div>
+
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <!-- Minimal Script to Load Balance -->
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const storedBalance = localStorage.getItem('balance') || '0';
+            document.getElementById('displayUserBalance').textContent = parseFloat(storedBalance).toFixed(2);
+        });
+
+        function handleWithdraw(method) {
+            const balance = parseFloat(localStorage.getItem('balance') || '0');
+            if (balance <= 0) {
+                alert(`Cannot withdraw via ${method}. Insufficient balance.`);
+            } else {
+                alert(`${method} withdrawal request is currently in maintenance. Please contact support.`);
+            }
+        }
+    </script>
+</body>
+
+</html>
