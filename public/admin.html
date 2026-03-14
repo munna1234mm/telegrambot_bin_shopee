@@ -180,9 +180,9 @@
                                 placeholder="e.g., 2.50" required>
                         </div>
                         <div class="form-group">
-                            <label for="updateImageUrl">Image URL</label>
-                            <input type="url" id="updateImageUrl" class="form-control"
-                                placeholder="e.g., https://example.com/image.png">
+                            <label for="updateImageFile">Product Image (Optional)</label>
+                            <input type="file" id="updateImageFile" class="form-control" accept="image/*">
+                            <small style="color: var(--text-light); font-size: 0.8rem;">Image will be automatically resized for fast loading.</small>
                         </div>
                         <div class="form-group">
                             <label for="updateContent">Description</label>
@@ -247,19 +247,71 @@
             const postBtn = document.getElementById('postBtn');
             const postMsg = document.getElementById('postMsg');
 
+            // Image Compression Helper
+            async function compressImage(file) {
+                return new Promise((resolve, reject) => {
+                    const reader = new FileReader();
+                    reader.onload = (event) => {
+                        const img = new Image();
+                        img.onload = () => {
+                            const canvas = document.createElement('canvas');
+                            let width = img.width;
+                            let height = img.height;
+                            const maxSize = 500;
+
+                            if (width > height) {
+                                if (width > maxSize) {
+                                    height *= maxSize / width;
+                                    width = maxSize;
+                                }
+                            } else {
+                                if (height > maxSize) {
+                                    width *= maxSize / height;
+                                    height = maxSize;
+                                }
+                            }
+
+                            canvas.width = width;
+                            canvas.height = height;
+                            const ctx = canvas.getContext('2d');
+                            ctx.drawImage(img, 0, 0, width, height);
+
+                            // Compress to base64 jpeg
+                            const dataUrl = canvas.toDataURL('image/jpeg', 0.8);
+                            resolve(dataUrl);
+                        };
+                        img.onerror = reject;
+                        img.src = event.target.result;
+                    };
+                    reader.onerror = reject;
+                    reader.readAsDataURL(file);
+                });
+            }
+
             updateForm.addEventListener('submit', async (e) => {
                 e.preventDefault();
                 const name = document.getElementById('updateTitle').value.trim();
                 const price = document.getElementById('updatePrice').value.trim();
-                const imageUrl = document.getElementById('updateImageUrl').value.trim();
+                const imageFile = document.getElementById('updateImageFile').files[0];
                 const description = document.getElementById('updateContent').value.trim();
                 const copyBtnText = document.getElementById('updateCopyText').value.trim();
                 const copyBtnValue = document.getElementById('updateCopyValue').value.trim();
 
-                postBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Posting...';
+                postBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Processing...';
                 postBtn.disabled = true;
 
                 try {
+                    let imageUrl = '';
+                    if (imageFile) {
+                        try {
+                            imageUrl = await compressImage(imageFile);
+                        } catch (err) {
+                            throw new Error('Could not compress image');
+                        }
+                    }
+
+                    postBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Uploading...';
+
                     const res = await fetch('/api/admin/items', {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
