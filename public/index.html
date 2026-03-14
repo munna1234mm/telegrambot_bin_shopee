@@ -72,11 +72,15 @@
                     <h3>Verification Successful!</h3>
                 </div>
                 <div class="profile-card">
-                    <div class="avatar">
-                        <i class="fa-solid fa-user"></i>
+                    <div class="avatar" style="overflow: hidden; padding: 0;">
+                        <img id="userAvatar" src="" alt="Profile"
+                            style="width: 100%; height: 100%; object-fit: cover; display: none;">
+                        <i id="defaultAvatarIcon" class="fa-solid fa-user"></i>
                     </div>
                     <div class="user-info">
-                        <h4>User ID: <span id="displayUserId"></span></h4>
+                        <h4><span id="displayUserName">User</span></h4>
+                        <p style="font-size: 0.8rem; color: var(--text-light); margin-bottom: 5px;">ID: <span
+                                id="displayUserId"></span></p>
                         <span class="badge">Verified Member</span>
                     </div>
                 </div>

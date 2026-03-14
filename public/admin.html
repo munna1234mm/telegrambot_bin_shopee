@@ -17,7 +17,7 @@
         }
 
         .app-container {
-            max-width: 800px;
+            max-width: 900px;
         }
 
         .header-title {
@@ -61,7 +61,16 @@
             background: var(--glass-bg);
             border-radius: 15px;
             padding: 20px;
-            min-height: 400px;
+            min-height: 500px;
+        }
+
+        .panel-content {
+            display: none;
+        }
+
+        .panel-content.active {
+            display: block;
+            animation: fadeIn 0.3s ease;
         }
 
         .form-group {
@@ -87,6 +96,46 @@
             resize: vertical;
         }
 
+        .user-list {
+            list-style: none;
+            padding: 0;
+        }
+
+        .user-item {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            background: rgba(255, 255, 255, 0.8);
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 10px;
+        }
+
+        .user-item img {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            object-fit: cover;
+        }
+
+        .user-details h5 {
+            margin: 0 0 5px 0;
+            font-size: 1.1rem;
+        }
+
+        .user-details p {
+            margin: 0;
+            font-size: 0.85rem;
+            color: #555;
+        }
+
+        .verified-badge {
+            color: green;
+            font-size: 0.8rem;
+            margin-top: 5px;
+            font-weight: bold;
+        }
+
         @media (max-width: 768px) {
             .admin-grid {
                 grid-template-columns: 1fr;
@@ -101,17 +150,11 @@
 
         <div class="admin-grid">
             <div class="sidebar glassmorphism">
-                <div class="menu-item active">
+                <div class="menu-item active" data-target="updates-panel">
                     <i class="fa-solid fa-bullhorn"></i> Shopping Updates
                 </div>
-                <div class="menu-item">
+                <div class="menu-item" data-target="users-panel">
                     <i class="fa-solid fa-users"></i> Manage Users
-                </div>
-                <div class="menu-item">
-                    <i class="fa-solid fa-box-open"></i> Products
-                </div>
-                <div class="menu-item">
-                    <i class="fa-solid fa-chart-line"></i> Statistics
                 </div>
                 <div class="menu-item" style="margin-top: auto; color: var(--error-color);">
                     <i class="fa-solid fa-right-from-bracket"></i> Logout
@@ -119,36 +162,139 @@
             </div>
 
             <div class="main-panel glassmorphism">
-                <h3>Post a new Shopping Update</h3>
-                <p class="subtitle">These updates will be shown to verified users in the Mini App.</p>
 
-                <form id="updateForm" style="margin-top: 20px;">
-                    <div class="form-group">
-                        <label for="updateTitle">Update Title</label>
-                        <input type="text" id="updateTitle" class="form-control"
-                            placeholder="e.g., Flash Sale 50% Off!">
-                    </div>
-                    <div class="form-group">
-                        <label for="updateContent">Update Content</label>
-                        <textarea id="updateContent" class="form-control"
-                            placeholder="Describe the update..."></textarea>
-                    </div>
-                    <button type="button" class="btn btn-primary"
-                        onclick="alert('Update Posted Successfully! (Simulation)')">
-                        <span>Post Update</span> <i class="fa-solid fa-paper-plane"></i>
-                    </button>
-                </form>
+                <!-- Updates Panel -->
+                <div id="updates-panel" class="panel-content active">
+                    <h3>Post a new Shopping Update</h3>
+                    <p class="subtitle">These updates will be shown to users in the Mini App.</p>
 
-                <hr style="margin: 30px 0; border: none; border-top: 1px solid rgba(0,0,0,0.1);">
-
-                <h4>Recent Updates</h4>
-                <div class="announcement" style="margin-top: 15px;">
-                    <h5>Welcome to the new Bin Shopee experience.</h5>
-                    <p>Stay tuned for upcoming shopping updates securely synced with your Telegram account!</p>
+                    <form id="updateForm" style="margin-top: 20px;">
+                        <div class="form-group">
+                            <label for="updateTitle">Update Title</label>
+                            <input type="text" id="updateTitle" class="form-control"
+                                placeholder="e.g., Flash Sale 50% Off!" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="updateContent">Update Content</label>
+                            <textarea id="updateContent" class="form-control" placeholder="Describe the update..."
+                                required></textarea>
+                        </div>
+                        <button type="submit" id="postBtn" class="btn btn-primary">
+                            <span>Post Update</span> <i class="fa-solid fa-paper-plane"></i>
+                        </button>
+                    </form>
+                    <div id="postMsg" class="message"></div>
                 </div>
+
+                <!-- Users Panel -->
+                <div id="users-panel" class="panel-content">
+                    <h3>Registered Users</h3>
+                    <p class="subtitle">Users who have interacted with the bot and verified.</p>
+                    <button id="refreshUsersBtn" class="btn btn-secondary"
+                        style="width: auto; padding: 8px 15px; margin-bottom: 15px;">
+                        <i class="fa-solid fa-rotate-right"></i> Refresh
+                    </button>
+                    <ul class="user-list" id="usersListContainer">
+                        <li>Loading users...</li>
+                    </ul>
+                </div>
+
             </div>
         </div>
     </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const menuItems = document.querySelectorAll('.menu-item[data-target]');
+            const panels = document.querySelectorAll('.panel-content');
+
+            // Tab Switching
+            menuItems.forEach(item => {
+                item.addEventListener('click', () => {
+                    menuItems.forEach(m => m.classList.remove('active'));
+                    panels.forEach(p => p.classList.remove('active'));
+
+                    item.classList.add('active');
+                    document.getElementById(item.dataset.target).classList.add('active');
+
+                    if (item.dataset.target === 'users-panel') {
+                        loadUsers();
+                    }
+                });
+            });
+
+            // Add Item Submit
+            const updateForm = document.getElementById('updateForm');
+            const postBtn = document.getElementById('postBtn');
+            const postMsg = document.getElementById('postMsg');
+
+            updateForm.addEventListener('submit', async (e) => {
+                e.preventDefault();
+                const title = document.getElementById('updateTitle').value.trim();
+                const content = document.getElementById('updateContent').value.trim();
+
+                postBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Posting...';
+                postBtn.disabled = true;
+
+                try {
+                    const res = await fetch('/api/admin/items', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ title, content })
+                    });
+                    const data = await res.json();
+
+                    postMsg.textContent = data.message;
+                    postMsg.className = data.success ? 'message success' : 'message error';
+                    if (data.success) updateForm.reset();
+                } catch (error) {
+                    postMsg.textContent = 'Error posting update.';
+                    postMsg.className = 'message error';
+                } finally {
+                    postBtn.innerHTML = '<span>Post Update</span> <i class="fa-solid fa-paper-plane"></i>';
+                    postBtn.disabled = false;
+                }
+            });
+
+            // Load Users
+            const refreshUsersBtn = document.getElementById('refreshUsersBtn');
+            refreshUsersBtn.addEventListener('click', loadUsers);
+
+            async function loadUsers() {
+                const container = document.getElementById('usersListContainer');
+                container.innerHTML = '<li><i class="fa-solid fa-spinner fa-spin"></i> Loading users...</li>';
+
+                try {
+                    const res = await fetch('/api/admin/users');
+                    const data = await res.json();
+
+                    if (data.success && data.users.length > 0) {
+                        container.innerHTML = '';
+                        // Sort by latest active
+                        data.users.sort((a, b) => new Date(b.lastActive || 0) - new Date(a.lastActive || 0));
+
+                        data.users.forEach(user => {
+                            const li = document.createElement('li');
+                            li.className = 'user-item';
+                            li.innerHTML = `
+                                <img src="${user.photoUrl || 'https://via.placeholder.com/50'}" alt="User">
+                                <div class="user-details">
+                                    <h5>${user.name || 'Unknown'}</h5>
+                                    <p>ID: ${user.chatId}</p>
+                                    ${user.verified ? '<div class="verified-badge"><i class="fa-solid fa-check-circle"></i> Verified</div>' : '<div style="color:red; font-size:0.8rem;">Unverified</div>'}
+                                </div>
+                            `;
+                            container.appendChild(li);
+                        });
+                    } else {
+                        container.innerHTML = '<li>No users found yet.</li>';
+                    }
+                } catch (err) {
+                    container.innerHTML = '<li style="color:red;">Error loading users. Check console.</li>';
+                }
+            }
+        });
+    </script>
 </body>
 
 </html>

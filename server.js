@@ -13,6 +13,24 @@ const botToken = process.env.BOT_TOKEN;
 const adminChatId = process.env.ADMIN_CHAT_ID;
 const bot = new TelegramBot(botToken, { polling: true });
 
+// Initialize Firebase
+const { initializeApp } = require('firebase/app');
+const { getFirestore, doc, setDoc, getDoc, collection, getDocs } = require('firebase/firestore');
+
+const firebaseConfig = {
+    apiKey: "AIzaSyA98AqgNgh67RBCuxh6ee_j0Lh5udTMHj0",
+    authDomain: "binshopeetips.firebaseapp.com",
+    projectId: "binshopeetips",
+    storageBucket: "binshopeetips.firebasestorage.app",
+    messagingSenderId: "431904094355",
+    appId: "1:431904094355:web:68796fa94c3f4ebd5af566",
+    measurementId: "G-Q2Y2QWR2EC"
+};
+
+const firebaseApp = initializeApp(firebaseConfig);
+const db = getFirestore(firebaseApp);
+
+
 // Middleware
 app.use(cors());
 app.use(bodyParser.json());
@@ -37,9 +55,43 @@ function generateCode() {
 }
 
 // Bot /start handling
-bot.onText(/\/start/, (msg) => {
+bot.onText(/\/start/, async (msg) => {
     const chatId = msg.chat.id;
-    bot.sendMessage(chatId, `Welcome to bin shopee bot!\nYour Chat ID is: ${chatId}\nPlease use this ID in the Mini App to verify your account.`);
+    const firstName = msg.from.first_name || 'Unknown';
+    const lastName = msg.from.last_name || '';
+    const fullName = `${firstName} ${lastName}`.trim();
+
+    let photoUrl = 'https://ui-avatars.com/api/?name=' + encodeURIComponent(fullName) + '&background=random';
+
+    // Try to get user profile photo
+    try {
+        const photos = await bot.getUserProfilePhotos(chatId, { limit: 1 });
+        if (photos && photos.total_count > 0) {
+            // Get the highest resolution photo (last in the array of sizes)
+            const photoSizes = photos.photos[0];
+            const bestPhoto = photoSizes[photoSizes.length - 1];
+
+            // Get the file path
+            photoUrl = await bot.getFileLink(bestPhoto.file_id);
+        }
+    } catch (error) {
+        console.error('Error fetching profile photo:', error.message);
+    }
+
+    // Save to Firebase (merging if exists)
+    try {
+        await setDoc(doc(db, "users", chatId.toString()), {
+            chatId: chatId,
+            name: fullName,
+            photoUrl: photoUrl,
+            verified: false,
+            lastActive: new Date().toISOString()
+        }, { merge: true });
+    } catch (error) {
+        console.error('Error saving user to Firebase:', error.message);
+    }
+
+    bot.sendMessage(chatId, `Welcome, ${firstName}!\nYour Chat ID is: ${chatId}\nPlease use this ID in the Mini App to verify your account.`);
 });
 
 // API endpoint to request a verification code
@@ -68,7 +120,7 @@ app.post('/api/send-code', async (req, res) => {
 });
 
 // API endpoint to verify the code
-app.post('/api/verify-code', (req, res) => {
+app.post('/api/verify-code', async (req, res) => {
     const { chatId, code } = req.body;
 
     if (!chatId || !code) {
@@ -90,12 +142,81 @@ app.post('/api/verify-code', (req, res) => {
         // Code is correct
         verificationCodes.delete(chatId.toString());
 
-        // Let admin know someone verified (optional)
-        bot.sendMessage(adminChatId, `User ${chatId} has successfully verified via Mini App.`);
+        try {
+            // Mark user as verified in Firebase
+            const userRef = doc(db, "users", chatId.toString());
+            await setDoc(userRef, { verified: true }, { merge: true });
 
-        res.json({ success: true, message: 'Verification successful', userId: chatId });
+            // Getting full user info to send to frontend
+            const userSnap = await getDoc(userRef);
+            let userData = { name: "User", photoUrl: "" };
+
+            if (userSnap.exists()) {
+                userData = userSnap.data();
+            }
+
+            // Let admin know someone verified (optional)
+            bot.sendMessage(adminChatId, `User ${userData.name || chatId} has successfully verified via Mini App.`);
+
+            res.json({
+                success: true,
+                message: 'Verification successful',
+                userId: chatId,
+                name: userData.name,
+                photoUrl: userData.photoUrl
+            });
+        } catch (error) {
+            console.error('Firebase verification update error:', error);
+            res.json({ success: true, message: 'Verified (Storage Error)', userId: chatId });
+        }
     } else {
         res.status(400).json({ success: false, message: 'Invalid verification code' });
+    }
+});
+
+// API endpoint for admin to get all users
+app.get('/api/admin/users', async (req, res) => {
+    try {
+        const usersCol = collection(db, 'users');
+        const userSnapshot = await getDocs(usersCol);
+        const usersList = userSnapshot.docs.map(doc => doc.data());
+        res.json({ success: true, users: usersList });
+    } catch (error) {
+        console.error('Error fetching users:', error);
+        res.status(500).json({ success: false, message: 'Failed to fetch users' });
+    }
+});
+
+// API endpoint for admin to add an item/update
+app.post('/api/admin/items', async (req, res) => {
+    const { title, content } = req.body;
+    if (!title || !content) {
+        return res.status(400).json({ success: false, message: 'Title and content required' });
+    }
+
+    try {
+        const newItemRef = doc(collection(db, 'items'));
+        await setDoc(newItemRef, {
+            title,
+            content,
+            createdAt: new Date().toISOString()
+        });
+        res.json({ success: true, message: 'Item added successfully' });
+    } catch (error) {
+        console.error('Error adding item:', error);
+        res.status(500).json({ success: false, message: 'Failed to add item' });
+    }
+});
+
+// API endpoint to fetch items for users
+app.get('/api/items', async (req, res) => {
+    try {
+        const itemsCol = collection(db, 'items');
+        const itemSnapshot = await getDocs(itemsCol);
+        const itemsList = itemSnapshot.docs.map(doc => doc.data()).sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+        res.json({ success: true, items: itemsList });
+    } catch (error) {
+        res.status(500).json({ success: false, message: 'Failed to fetch items' });
     }
 });
 

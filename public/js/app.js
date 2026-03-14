@@ -91,7 +91,17 @@ document.addEventListener('DOMContentLoaded', () => {
             if (data.success) {
                 sectionVerify.classList.remove('active');
                 sectionDashboard.classList.add('active');
-                displayUserId.textContent = data.userId;
+
+                document.getElementById('displayUserId').textContent = data.userId;
+                document.getElementById('displayUserName').textContent = data.name || 'User';
+
+                if (data.photoUrl) {
+                    const avatarImg = document.getElementById('userAvatar');
+                    const defaultIcon = document.getElementById('defaultAvatarIcon');
+                    avatarImg.src = data.photoUrl;
+                    avatarImg.style.display = 'block';
+                    defaultIcon.style.display = 'none';
+                }
             } else {
                 showMessage(verifyMsg, data.message || 'Invalid verification code', 'error');
             }
