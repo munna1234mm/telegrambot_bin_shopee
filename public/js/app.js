@@ -21,6 +21,27 @@ document.addEventListener('DOMContentLoaded', () => {
 
     let currentChatId = '';
 
+    // Check localStorage for existing session
+    const storedUserId = localStorage.getItem('userId');
+    const storedUserName = localStorage.getItem('userName');
+    const storedPhotoUrl = localStorage.getItem('photoUrl');
+
+    if (storedUserId) {
+        sectionRequest.classList.remove('active');
+        sectionDashboard.classList.add('active');
+
+        document.getElementById('displayUserId').textContent = storedUserId;
+        document.getElementById('displayUserName').textContent = storedUserName || 'User';
+
+        if (storedPhotoUrl && storedPhotoUrl !== 'undefined' && storedPhotoUrl !== 'null') {
+            const avatarImg = document.getElementById('userAvatar');
+            const defaultIcon = document.getElementById('defaultAvatarIcon');
+            avatarImg.src = storedPhotoUrl;
+            avatarImg.style.display = 'block';
+            defaultIcon.style.display = 'none';
+        }
+    }
+
     // Modals
     howToFindIdBtn.addEventListener('click', () => {
         modal.classList.add('active');
@@ -89,6 +110,13 @@ document.addEventListener('DOMContentLoaded', () => {
             const data = await response.json();
 
             if (data.success) {
+                // Save session to localStorage
+                localStorage.setItem('userId', data.userId);
+                localStorage.setItem('userName', data.name || 'User');
+                if (data.photoUrl) {
+                    localStorage.setItem('photoUrl', data.photoUrl);
+                }
+
                 sectionVerify.classList.remove('active');
                 sectionDashboard.classList.add('active');
 
