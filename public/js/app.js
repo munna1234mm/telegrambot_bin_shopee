@@ -141,7 +141,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
             if (data.success) {
                 // Save session to localStorage
-                localStorage.setItem('userId', data.userId);
+                localStorage.setItem('binshopee_user_id', data.userId);
                 localStorage.setItem('userName', data.name || 'User');
                 localStorage.setItem('balance', data.balance || 0);
                 if (data.photoUrl) {
