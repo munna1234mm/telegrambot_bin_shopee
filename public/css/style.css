@@ -1,14 +1,15 @@
 :root {
-    --primary-color: #0088cc; /* Telegram Blue */
-    --primary-dark: #006699;
-    --bg-gradient: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
-    --text-color: #333333;
-    --text-light: #777777;
-    --glass-bg: rgba(255, 255, 255, 0.7);
-    --glass-border: rgba(255, 255, 255, 0.5);
-    --glass-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.1);
-    --success-color: #28a745;
-    --error-color: #dc3545;
+    --primary-color: #0ea5e9; /* Vibrant Blue */
+    --primary-dark: #0284c7;
+    --bg-gradient: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+    --text-color: #f8fafc;
+    --text-light: #94a3b8;
+    --glass-bg: rgba(30, 41, 59, 0.7);
+    --glass-border: rgba(255, 255, 255, 0.1);
+    --glass-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+    --success-color: #22c55e;
+    --error-color: #ef4444;
+    --card-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.3), 0 8px 10px -6px rgba(0, 0, 0, 0.3);
 }
 
 * {
@@ -122,13 +123,13 @@ body {
 .input-group input {
     width: 100%;
     padding: 15px 15px 15px 15px;
-    border: 2px solid transparent;
+    border: 1px solid var(--glass-border);
     border-radius: 12px;
-    background: rgba(255, 255, 255, 0.9);
+    background: rgba(15, 23, 42, 0.6);
     font-size: 1rem;
     font-family: inherit;
+    color: var(--text-color);
     transition: all 0.3s ease;
-    box-shadow: inset 0 2px 5px rgba(0,0,0,0.05);
 }
 
 .input-group input:focus {
@@ -141,7 +142,7 @@ body {
     position: absolute;
     top: -10px;
     left: 15px;
-    background: white;
+    background: #1e293b;
     padding: 0 5px;
     font-size: 0.8rem;
     color: var(--primary-color);
@@ -347,13 +348,14 @@ body {
 }
 
 .modal-content {
-    background: white;
+    background: #1e293b;
     padding: 30px;
-    border-radius: 20px;
+    border-radius: 24px;
     width: 90%;
     max-width: 400px;
     position: relative;
-    box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+    border: 1px solid var(--glass-border);
 }
 
 .close-btn {
@@ -398,18 +400,19 @@ body {
 }
 
 .feature-item {
-    background: rgba(255, 255, 255, 0.8);
+    background: var(--glass-bg);
     padding: 25px 20px;
-    border-radius: 16px;
+    border-radius: 20px;
     display: flex;
     flex-direction: column;
     align-items: center;
     gap: 12px;
     cursor: pointer;
-    transition: transform 0.2s ease, box-shadow 0.2s ease;
+    transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
     text-decoration: none;
     color: var(--text-color);
-    box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+    border: 1px solid var(--glass-border);
+    box-shadow: var(--card-shadow);
 }
 
 .feature-item i {
@@ -435,12 +438,13 @@ body {
 }
 
 .product-card {
-    background: rgba(255, 255, 255, 0.8);
-    border-radius: 12px;
+    background: var(--glass-bg);
+    border-radius: 16px;
     overflow: hidden;
-    box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+    box-shadow: var(--card-shadow);
     display: flex;
     flex-direction: column;
+    border: 1px solid var(--glass-border);
 }
 
 .product-image {
@@ -497,4 +501,41 @@ body {
 
 .btn-copy:hover {
     background: var(--primary-dark);
+}
+
+/* Logout Button */
+.logout-btn {
+    position: absolute;
+    top: 20px;
+    right: 20px;
+    background: rgba(239, 68, 68, 0.1);
+    color: var(--error-color);
+    border: 1px solid rgba(239, 68, 68, 0.2);
+    width: 40px;
+    height: 40px;
+    border-radius: 12px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    cursor: pointer;
+    transition: all 0.2s;
+    z-index: 10;
+}
+
+.logout-btn:hover {
+    background: var(--error-color);
+    color: white;
+    transform: scale(1.1);
+}
+
+/* Refer Card Styling */
+.referral-section {
+    background: var(--glass-bg) !important;
+    border: 1px solid var(--glass-border) !important;
+    transition: transform 0.2s;
+    cursor: pointer;
+}
+
+.referral-section:hover {
+    transform: scale(1.02);
 }

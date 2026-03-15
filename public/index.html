@@ -77,15 +77,17 @@
                     <h3>Verification Successful!</h3>
                 </div>
                 <div class="balance-card-premium">
+                    <button class="logout-btn" onclick="logoutUser()" title="Logout">
+                        <i class="fa-solid fa-right-from-bracket"></i>
+                    </button>
                     <div class="user-top-row">
                         <div class="user-info-basic">
                             <span class="user-name-text">Hello, <span id="displayUserName">User</span></span>
                             <span class="badge">Verified</span>
                         </div>
-                        <div class="avatar" style="overflow: hidden; padding: 0; width: 40px; height: 40px;">
-                            <img id="userAvatar" src="" alt="Profile"
-                                style="width: 100%; height: 100%; object-fit: cover; display: none;">
-                            <i id="defaultAvatarIcon" class="fa-solid fa-user" style="font-size: 1.2rem;"></i>
+                        <div class="user-avatar-wrapper">
+                            <img id="userAvatar" src="" alt="Profile" style="width: 50px; height: 50px; border-radius: 50%; display: none; border: 2px solid rgba(255,255,255,0.2);">
+                            <i id="defaultAvatarIcon" class="fa-solid fa-circle-user" style="font-size: 50px; color: rgba(255,255,255,0.5);"></i>
                         </div>
                     </div>
                     
@@ -120,15 +122,13 @@
 
                 <!-- Products will follow directly -->
 
-                <div class="referral-section mt-3" style="background: rgba(255, 255, 255, 0.8); border-radius: 15px; padding: 20px; text-align: center;">
+                <div class="referral-section mt-3" onclick="window.location.href='referral.html'" style="border-radius: 15px; padding: 20px; text-align: center;">
                     <i class="fa-solid fa-gift" style="font-size: 2rem; color: var(--primary-color); margin-bottom: 10px;"></i>
                     <h3 style="font-size: 1.1rem; margin-bottom: 5px;">Refer & Earn!</h3>
-                    <p style="font-size: 0.8rem; color: var(--text-light); margin-bottom: 15px;">Share your link with friends to earn <strong style="color: var(--success-color);"><span id="displayReferralReward">0</span> USDT</strong> bonuses when they join.</p>
-                    
-                    <div style="display: flex; gap: 10px;">
-                        <input type="text" id="displayReferralLink" class="form-control" readonly style="font-size: 0.8rem; padding: 10px; flex: 1;">
-                        <button class="btn btn-primary" onclick="copyReferralLink()" style="width: auto; padding: 10px 15px;"><i class="fa-regular fa-copy"></i></button>
-                    </div>
+                    <p style="font-size: 0.8rem; color: var(--text-light); margin-bottom: 5px;">Tap here to see your referral stats and link.</p>
+                    <p style="font-size: 0.9rem; font-weight: 600; color: var(--success-color);">
+                        Earn +<span id="displayReferralReward">0</span> USDT per invite!
+                    </p>
                 </div>
             </section>
         </main>

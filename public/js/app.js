@@ -194,6 +194,13 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     // Helper functions
+    window.logoutUser = function() {
+        if(confirm('Are you sure you want to logout?')) {
+            localStorage.clear();
+            window.location.reload();
+        }
+    };
+
     window.copyReferralLink = function() {
         const storedCode = localStorage.getItem('binshopee_ref_code') || localStorage.getItem('binshopee_user_id');
         const botUsername = 'hit_tips_bot'; // From user screenshot

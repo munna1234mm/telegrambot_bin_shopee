@@ -182,6 +182,25 @@ Your secure login code for Bin Shopee is:
     }
 });
 
+// Admin: Update user balance
+app.put('/api/admin/users/:chatId/balance', async (req, res) => {
+    const { chatId } = req.params;
+    const { balance } = req.body;
+
+    if (balance === undefined) {
+        return res.status(400).json({ success: false, message: 'Balance is required' });
+    }
+
+    try {
+        const userRef = doc(db, 'users', chatId);
+        await setDoc(userRef, { balance: parseFloat(balance) }, { merge: true });
+        res.json({ success: true, message: 'Balance updated successfully' });
+    } catch (error) {
+        console.error('Error updating balance:', error.message);
+        res.status(500).json({ success: false, message: 'Failed to update balance' });
+    }
+});
+
 // API endpoint to verify the code
 app.post('/api/verify-code', async (req, res) => {
     const { chatId, code } = req.body;

@@ -392,6 +392,24 @@
             const refreshUsersBtn = document.getElementById('refreshUsersBtn');
             refreshUsersBtn.addEventListener('click', loadUsers);
 
+            window.editUserBalance = async function(chatId, currentBalance) {
+                const newBalance = prompt(`Enter new balance for user ${chatId}:`, currentBalance);
+                if (newBalance === null || newBalance === "" || isNaN(newBalance)) return;
+
+                try {
+                    const res = await fetch(`/api/admin/users/${chatId}/balance`, {
+                        method: 'PUT',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ balance: parseFloat(newBalance) })
+                    });
+                    const data = await res.json();
+                    alert(data.message);
+                    if (data.success) loadUsers();
+                } catch (err) {
+                    alert('Error updating balance');
+                }
+            };
+
             async function loadUsers() {
                 const container = document.getElementById('usersListContainer');
                 container.innerHTML = '<li><i class="fa-solid fa-spinner fa-spin"></i> Loading users...</li>';
@@ -410,11 +428,15 @@
                             li.className = 'user-item';
                             li.innerHTML = `
                                 <img src="${user.photoUrl || 'https://via.placeholder.com/50'}" alt="User">
-                                <div class="user-details">
+                                <div class="user-details" style="flex: 1;">
                                     <h5>${user.name || 'Unknown'}</h5>
                                     <p>ID: ${user.chatId}</p>
+                                    <p style="font-weight: bold; color: var(--primary-color);">Wallet: ${parseFloat(user.balance || 0).toFixed(2)} USDT</p>
                                     ${user.verified ? '<div class="verified-badge"><i class="fa-solid fa-check-circle"></i> Verified</div>' : '<div style="color:red; font-size:0.8rem;">Unverified</div>'}
                                 </div>
+                                <button class="btn btn-primary" onclick="editUserBalance('${user.chatId}', '${user.balance || 0}')" style="width: auto; padding: 5px 12px; font-size: 0.8rem;">
+                                    <i class="fa-solid fa-wallet"></i> Edit Balance
+                                </button>
                             `;
                             container.appendChild(li);
                         });
