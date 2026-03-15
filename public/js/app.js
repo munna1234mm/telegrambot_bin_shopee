@@ -51,7 +51,8 @@ document.addEventListener('DOMContentLoaded', () => {
         
         const refLinkInput = document.getElementById('displayReferralLink');
         if (refLinkInput) {
-            refLinkInput.value = `https://t.me/hit_tips_bot/app?startapp=${storedUserId}`;
+            const savedRefCode = localStorage.getItem('binshopee_ref_code') || storedUserId;
+            refLinkInput.value = `https://t.me/hit_tips_bot?start=${savedRefCode}`;
         }
 
         if (storedPhotoUrl && storedPhotoUrl !== 'undefined' && storedPhotoUrl !== 'null') {
@@ -157,7 +158,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 const refLinkInput = document.getElementById('displayReferralLink');
                 if (refLinkInput) {
                     const savedRefCode = data.referralCode || data.userId;
-                    refLinkInput.value = `https://t.me/hit_tips_bot/app?startapp=${savedRefCode}`;
+                    refLinkInput.value = `https://t.me/hit_tips_bot?start=${savedRefCode}`;
                 }
 
                 if (data.photoUrl) {
@@ -196,7 +197,7 @@ document.addEventListener('DOMContentLoaded', () => {
     window.copyReferralLink = function() {
         const storedCode = localStorage.getItem('binshopee_ref_code') || localStorage.getItem('binshopee_user_id');
         const botUsername = 'hit_tips_bot'; // From user screenshot
-        const refLink = `https://t.me/${botUsername}/app?startapp=${storedCode}`;
+        const refLink = `https://t.me/${botUsername}?start=${storedCode}`;
         
         navigator.clipboard.writeText(refLink).then(() => {
             alert('Referral Link Copied! Share it with friends to earn USDT.');

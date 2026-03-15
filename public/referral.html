@@ -129,11 +129,9 @@
                         // Since I don't know the exact short_name of the app, using startapp parameter on the bot link
                         // Also usually the user will setup a direct mini app link.
                         const botUsername = 'hit_tips_bot'; // The bot from the screenshot
-                        const shortName = 'hit_tip'; // Assuming app shortname, if not just bot link
                         
-                        // Telegram recommends: https://t.me/bot_username/app_shortname?startapp=command
-                        // We will build a generic one for now, but user can customize.
-                        const refLink = `https://t.me/${botUsername}/app?startapp=${code}`;
+                        // Standard Telegram bot start payload is widely supported without extra config
+                        const refLink = `https://t.me/${botUsername}?start=${code}`;
                         
                         navigator.clipboard.writeText(refLink).then(() => {
                             alert('Referral Link Copied! Share it with friends.');
