@@ -67,6 +67,9 @@ document.addEventListener('DOMContentLoaded', () => {
     } else {
         sectionRequest.classList.add('active');
     }
+    
+    // Always call once on load to ensure reward display is populated
+    loadGlobalSettings();
 
     // Modals
     howToFindIdBtn.addEventListener('click', () => {
@@ -150,6 +153,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
                 sectionVerify.classList.remove('active');
                 sectionDashboard.classList.add('active');
+                loadGlobalSettings(); // Refresh to catch latest bonus amount from server
 
                 document.getElementById('displayUserId').textContent = data.userId;
                 document.getElementById('displayUserName').textContent = data.name || 'User';
