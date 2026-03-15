@@ -43,10 +43,14 @@ document.addEventListener('DOMContentLoaded', () => {
         if (storedPhotoUrl && storedPhotoUrl !== 'undefined' && storedPhotoUrl !== 'null') {
             const avatarImg = document.getElementById('userAvatar');
             const defaultIcon = document.getElementById('defaultAvatarIcon');
-            avatarImg.src = storedPhotoUrl;
-            avatarImg.style.display = 'block';
-            defaultIcon.style.display = 'none';
+            if (avatarImg) avatarImg.src = storedPhotoUrl;
+            if (avatarImg) avatarImg.style.display = 'block';
+            if (defaultIcon) defaultIcon.style.display = 'none';
         }
+        
+        loadGlobalSettings();
+    } else {
+        sectionRequest.classList.add('active');
     }
 
     // Modals
@@ -140,12 +144,14 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (data.photoUrl) {
                     const avatarImg = document.getElementById('userAvatar');
                     const defaultIcon = document.getElementById('defaultAvatarIcon');
-                    avatarImg.src = data.photoUrl;
-                    avatarImg.style.display = 'block';
-                    defaultIcon.style.display = 'none';
+                    if(avatarImg) avatarImg.src = data.photoUrl;
+                    if (avatarImg) avatarImg.style.display = 'block';
+                    if (defaultIcon) defaultIcon.style.display = 'none';
                 }
+
+                loadGlobalSettings();
             } else {
-                showMessage(verifyMsg, data.message || 'Invalid verification code', 'error');
+                showMessage(verifyMsg, data.message || 'Verification failed', 'error');
             }
         } catch (error) {
             showMessage(verifyMsg, 'Network error. Please try again.', 'error');
@@ -172,6 +178,21 @@ document.addEventListener('DOMContentLoaded', () => {
             });
         }
     };
+
+    async function loadGlobalSettings() {
+        try {
+            const res = await fetch('/api/admin/settings');
+            const data = await res.json();
+            if (data.success && data.settings) {
+                const rewardElement = document.getElementById('displayReferralReward');
+                if (rewardElement) {
+                    rewardElement.textContent = parseFloat(data.settings.referralBonus || 0).toFixed(2);
+                }
+            }
+        } catch (error) {
+            console.error('Failed to load settings:', error);
+        }
+    }
 
     function showMessage(element, text, type) {
         element.textContent = text;
