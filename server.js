@@ -101,8 +101,8 @@ bot.onText(/\/start(?:\s+(.*))?/, async (msg, match) => {
         // Fetch current referral bonus for the message
         let currentBonus = 0;
         try {
-            const settingsSnap = await getDoc(doc(db, 'settings', 'global'));
-            currentBonus = settingsSnap.exists() ? (settingsSnap.data().referralBonus || 0) : 0;
+            const settingsSnap = await getDoc(doc(db, 'appSettings', 'referral'));
+            currentBonus = settingsSnap.exists() ? (settingsSnap.data().bonusAmount || 0) : 0;
         } catch (e) {}
 
         const welcomeHtml = `🎉 <b>Welcome to Bin Shopee, ${firstName}!</b> 🎉
@@ -433,28 +433,34 @@ app.delete('/api/admin/items/:id', async (req, res) => {
 
 app.get('/api/admin/settings', async (req, res) => {
     try {
-        const settingsSnap = await getDoc(doc(db, 'settings', 'global'));
-        let settings = settingsSnap.exists() ? settingsSnap.data() : { referralBonus: 0 };
-        console.log('Fetched settings:', settings);
+        const settingsSnap = await getDoc(doc(db, 'appSettings', 'referral'));
+        let settings = settingsSnap.exists() ? settingsSnap.data() : { bonusAmount: 0 };
+        console.log('Fetched app settings:', settings);
         res.json({ success: true, settings });
     } catch (error) {
         console.error('Error fetching settings:', error.message);
-        res.status(500).json({ success: false, message: 'Failed to fetch settings' });
+        res.status(500).json({ success: false, message: 'Failed to fetch settings: ' + error.message });
     }
 });
 
 app.post('/api/admin/settings', async (req, res) => {
-    const { referralBonus } = req.body;
+    const { referralBonus, bonusAmount } = req.body;
     try {
-        let bonusVal = parseFloat(referralBonus);
+        // Handle both possible field names for resilience
+        let bonusVal = parseFloat(referralBonus !== undefined ? referralBonus : bonusAmount);
         if (isNaN(bonusVal)) bonusVal = 0;
         
-        await setDoc(doc(db, 'settings', 'global'), { referralBonus: bonusVal }, { merge: true });
-        console.log('Saved settings with bonus:', bonusVal);
-        res.json({ success: true, message: 'Settings saved successfully' });
+        const settingsRef = doc(db, 'appSettings', 'referral');
+        await setDoc(settingsRef, { 
+            bonusAmount: bonusVal,
+            updatedAt: new Date().toISOString()
+        }, { merge: true });
+        
+        console.log('SUCCESS: Saved bonus:', bonusVal);
+        res.json({ success: true, message: 'Settings saved to Firestore successfully!' });
     } catch (error) {
-        console.error('Error saving settings:', error.message);
-        res.status(500).json({ success: false, message: 'Failed to save settings: ' + error.message });
+        console.error('DB SAVE ERROR:', error.message);
+        res.status(500).json({ success: false, message: 'Database error: ' + error.message });
     }
 });
 

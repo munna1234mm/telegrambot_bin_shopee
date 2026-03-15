@@ -244,7 +244,7 @@
                             <input type="number" step="0.01" id="referralBonusInput" class="form-control" placeholder="0.00">
                             <small style="color: var(--text-light); font-size: 0.8rem;">Amount awarded to a user when someone joins via their link.</small>
                         </div>
-                        <button type="submit" id="saveSettingsBtn" class="btn btn-primary">
+                        <button type="button" id="saveSettingsBtn" class="btn btn-primary">
                             <span>Save Settings</span> <i class="fa-solid fa-save"></i>
                         </button>
                     </form>
@@ -530,7 +530,7 @@
                     const res = await fetch('/api/admin/settings');
                     const data = await res.json();
                     if(data.success) {
-                        document.getElementById('referralBonusInput').value = data.settings.referralBonus || 0;
+                        document.getElementById('referralBonusInput').value = data.settings.bonusAmount || 0;
                         document.getElementById('rawSettings').textContent = JSON.stringify(data.settings, null, 2);
                     } else {
                         document.getElementById('rawSettings').textContent = 'Error: ' + (data.message || 'Unknown');
@@ -540,31 +540,44 @@
                 }
             }
 
-            settingsForm.addEventListener('submit', async (e) => {
-                e.preventDefault();
+            saveSettingsBtn.addEventListener('click', async () => {
+                const inputField = document.getElementById('referralBonusInput');
+                let referralBonus = inputField.value || "0";
+                
+                // Sanitize input
+                referralBonus = referralBonus.toString().replace(',', '.');
+                const bonusVal = parseFloat(referralBonus);
+                
+                if (isNaN(bonusVal)) {
+                    alert('Please enter a valid number for the bonus.');
+                    return;
+                }
+
                 saveSettingsBtn.disabled = true;
                 saveSettingsBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Saving...';
-                let referralBonus = document.getElementById('referralBonusInput').value || "0";
-                // Handle commas if user uses them as decimal separator
-                referralBonus = referralBonus.toString().replace(',', '.');
                 
                 try {
+                    console.log('Sending bonus value:', bonusVal);
                     const res = await fetch('/api/admin/settings', {
                         method: 'POST',
                         headers: {'Content-Type': 'application/json'},
-                        body: JSON.stringify({ referralBonus: parseFloat(referralBonus) })
+                        body: JSON.stringify({ referralBonus: bonusVal })
                     });
                     const data = await res.json();
-                    settingsMsg.textContent = data.message;
-                    settingsMsg.className = data.success ? 'message success' : 'message error';
+                    
                     if (data.success) {
+                        settingsMsg.textContent = 'Settings saved successfully!';
+                        settingsMsg.className = 'message success';
                         alert('Settings saved successfully!');
-                        loadSettings(); // Refresh raw view
+                        await loadSettings(); // Reload to show updated raw data
+                    } else {
+                        throw new Error(data.message || 'Server error');
                     }
                 } catch(e) {
-                    settingsMsg.textContent = 'Error saving';
+                    console.error('Save error:', e);
+                    settingsMsg.textContent = 'Error: ' + e.message;
                     settingsMsg.className = 'message error';
-                    alert('Failed to save settings. Check console.');
+                    alert('Failed to save settings: ' + e.message);
                 } finally {
                     saveSettingsBtn.disabled = false;
                     saveSettingsBtn.innerHTML = '<span>Save Settings</span> <i class="fa-solid fa-save"></i>';

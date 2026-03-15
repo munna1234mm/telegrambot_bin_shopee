@@ -222,7 +222,7 @@ document.addEventListener('DOMContentLoaded', () => {
             if (data.success && data.settings) {
                 const rewardElement = document.getElementById('displayReferralReward');
                 if (rewardElement) {
-                    rewardElement.textContent = parseFloat(data.settings.referralBonus || 0).toFixed(2);
+                    rewardElement.textContent = parseFloat(data.settings.bonusAmount || 0).toFixed(2);
                 }
             }
         } catch (error) {
