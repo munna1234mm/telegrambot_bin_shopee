@@ -98,18 +98,27 @@ bot.onText(/\/start(?:\s+(.*))?/, async (msg, match) => {
         if (isNewUser && referrerId) {
             await setDoc(userRef, { pendingReferrer: referrerId }, { merge: true });
         }
-    } catch (error) {
-        console.error('Error saving user to Firebase:', error.message);
-    }
+        // Fetch current referral bonus for the message
+        let currentBonus = 0;
+        try {
+            const settingsSnap = await getDoc(doc(db, 'settings', 'global'));
+            currentBonus = settingsSnap.exists() ? (settingsSnap.data().referralBonus || 0) : 0;
+        } catch (e) {}
 
-    const welcomeHtml = `🎉 <b>Welcome to Bin Shopee, ${firstName}!</b> 🎉
+        const welcomeHtml = `🎉 <b>Welcome to Bin Shopee, ${firstName}!</b> 🎉
 
 Your secure Telegram Chat ID is:
 <code>${chatId}</code>
 
+💰 <b>Referral Bonus: ${currentBonus} USDT</b>
+<i>Earn USDT for every friend who joins and verifies through your link!</i>
+
 <i>💡 Please copy this ID and use it in the Mini App to verify your account and start earning!</i>`;
 
-    bot.sendMessage(chatId, welcomeHtml, { parse_mode: 'HTML' });
+        bot.sendMessage(chatId, welcomeHtml, { parse_mode: 'HTML' });
+    } catch (error) {
+        console.error('Bot /start error:', error.message);
+    }
 });
 
 // API endpoint to request a verification code
