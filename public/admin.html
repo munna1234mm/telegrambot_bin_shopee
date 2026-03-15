@@ -392,9 +392,13 @@
             const refreshUsersBtn = document.getElementById('refreshUsersBtn');
             refreshUsersBtn.addEventListener('click', loadUsers);
 
-            window.editUserBalance = async function(chatId, currentBalance) {
+            window.editUserBalance = async function(chatId, currentBalance, btn) {
                 const newBalance = prompt(`Enter new balance for user ${chatId}:`, currentBalance);
                 if (newBalance === null || newBalance === "" || isNaN(newBalance)) return;
+
+                const originalHtml = btn.innerHTML;
+                btn.disabled = true;
+                btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Saving...';
 
                 try {
                     const res = await fetch(`/api/admin/users/${chatId}/balance`, {
@@ -403,10 +407,18 @@
                         body: JSON.stringify({ balance: parseFloat(newBalance) })
                     });
                     const data = await res.json();
-                    alert(data.message);
-                    if (data.success) loadUsers();
+                    if (data.success) {
+                        alert('Balance updated successfully!');
+                        loadUsers();
+                    } else {
+                        alert('Error: ' + data.message);
+                        btn.disabled = false;
+                        btn.innerHTML = originalHtml;
+                    }
                 } catch (err) {
                     alert('Error updating balance');
+                    btn.disabled = false;
+                    btn.innerHTML = originalHtml;
                 }
             };
 
@@ -434,7 +446,7 @@
                                     <p style="font-weight: bold; color: var(--primary-color);">Wallet: ${parseFloat(user.balance || 0).toFixed(2)} USDT</p>
                                     ${user.verified ? '<div class="verified-badge"><i class="fa-solid fa-check-circle"></i> Verified</div>' : '<div style="color:red; font-size:0.8rem;">Unverified</div>'}
                                 </div>
-                                <button class="btn btn-primary" onclick="editUserBalance('${user.chatId}', '${user.balance || 0}')" style="width: auto; padding: 5px 12px; font-size: 0.8rem;">
+                                <button class="btn btn-primary" onclick="editUserBalance('${user.chatId}', '${user.balance || 0}', this)" style="width: auto; padding: 5px 12px; font-size: 0.8rem;">
                                     <i class="fa-solid fa-wallet"></i> Edit Balance
                                 </button>
                             `;

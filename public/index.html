@@ -71,15 +71,15 @@
             </section>
 
             <!-- Step 3: Dashboard -->
-            <section id="step3-dashboard" class="dashboard-section card glassmorphism">
+            <section id="step3-dashboard" class="dashboard-section card glassmorphism" style="position: relative;">
+                <button class="logout-btn" onclick="logoutUser()" title="Logout" style="z-index: 101;">
+                    <i class="fa-solid fa-right-from-bracket"></i>
+                </button>
                 <div class="success-banner">
                     <i class="fa-solid fa-circle-check"></i>
                     <h3>Verification Successful!</h3>
                 </div>
                 <div class="balance-card-premium">
-                    <button class="logout-btn" onclick="logoutUser()" title="Logout">
-                        <i class="fa-solid fa-right-from-bracket"></i>
-                    </button>
                     <div class="user-top-row">
                         <div class="user-info-basic">
                             <span class="user-name-text">Hello, <span id="displayUserName">User</span></span>
