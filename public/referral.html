@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bin Shopee - Referrals</title>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="./css/style.css">
+    <style>
+        .page-header {
+            display: flex;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+        .back-btn {
+            background: none;
+            border: none;
+            font-size: 1.5rem;
+            color: var(--text-color);
+            cursor: pointer;
+            margin-right: 15px;
+        }
+        .stats-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            margin-bottom: 25px;
+        }
+        .stat-card {
+            background: rgba(255, 255, 255, 0.9);
+            padding: 20px;
+            border-radius: 15px;
+            text-align: center;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+        }
+        .stat-value {
+            font-size: 2rem;
+            font-weight: 700;
+            color: var(--primary-color);
+            margin-bottom: 5px;
+        }
+        .stat-label {
+            font-size: 0.9rem;
+            color: var(--text-light);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        .code-display {
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            padding: 20px;
+            border-radius: 12px;
+            text-align: center;
+            border: 2px dashed var(--primary-color);
+            margin-bottom: 20px;
+        }
+        .code-text {
+            font-size: 1.8rem;
+            font-weight: bold;
+            letter-spacing: 2px;
+            color: var(--primary-dark);
+            margin-bottom: 10px;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="app-container">
+        <main class="app-content">
+            <section class="dashboard-section card glassmorphism" style="display: flex;">
+                <div class="page-header">
+                    <button class="back-btn" onclick="window.location.href='index.html'">
+                        <i class="fa-solid fa-arrow-left"></i>
+                    </button>
+                    <h2>Referral Program</h2>
+                </div>
+
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-value" id="totalReferred">0</div>
+                        <div class="stat-label">Friends Invited</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value" id="totalEarned">0.00</div>
+                        <div class="stat-label">USDT Earned</div>
+                    </div>
+                </div>
+
+                <div class="code-display">
+                    <div style="font-size: 0.9rem; color: var(--text-light); margin-bottom: 5px;">Your Invite Code</div>
+                    <div class="code-text" id="myReferralCode">------</div>
+                    <button class="btn btn-primary" onclick="copyMyCode()" style="width: auto; padding: 10px 20px; margin: 0 auto;">
+                        <i class="fa-regular fa-copy"></i> Copy Link
+                    </button>
+                </div>
+                
+                <div style="text-align: center; font-size: 0.85rem; color: var(--text-light);">
+                    <i class="fa-solid fa-circle-info"></i> Invite your friends using your link. When they launch the app via your link and verify, you'll earn a USDT bonus!
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <!-- Telegram Web App script to get initData -->
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', async () => {
+            const storedUserId = localStorage.getItem('binshopee_user_id');
+            if(!storedUserId) {
+                window.location.href = 'index.html';
+                return;
+            }
+
+            try {
+                // Fetch fresh user data (stats and ref code)
+                const res = await fetch('/api/user/' + storedUserId);
+                const data = await res.json();
+                
+                if(data.success && data.user) {
+                    document.getElementById('totalReferred').textContent = data.user.totalReferred || 0;
+                    document.getElementById('totalEarned').textContent = parseFloat(data.user.referralEarnings || 0).toFixed(2);
+                    
+                    const code = data.user.referralCode || storedUserId;
+                    document.getElementById('myReferralCode').textContent = code;
+                    
+                    window.copyMyCode = function() {
+                        // Based on the user's screenshot, they want to use the format: t.me/hit_tips_bot/appname?startapp=CODE
+                        // Since I don't know the exact short_name of the app, using startapp parameter on the bot link
+                        // Also usually the user will setup a direct mini app link.
+                        const botUsername = 'hit_tips_bot'; // The bot from the screenshot
+                        const shortName = 'hit_tip'; // Assuming app shortname, if not just bot link
+                        
+                        // Telegram recommends: https://t.me/bot_username/app_shortname?startapp=command
+                        // We will build a generic one for now, but user can customize.
+                        const refLink = `https://t.me/${botUsername}/app?startapp=${code}`;
+                        
+                        navigator.clipboard.writeText(refLink).then(() => {
+                            alert('Referral Link Copied! Share it with friends.');
+                        });
+                    }
+                }
+            } catch (error) {
+                console.error('Error fetching stats:', error);
+            }
+        });
+    </script>
+</body>
+
+</html>

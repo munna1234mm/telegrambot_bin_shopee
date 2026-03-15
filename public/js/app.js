@@ -1,19 +1,25 @@
 document.addEventListener('DOMContentLoaded', () => {
     // UI Elements
-    const sectionRequest = document.getElementById('step1-request');
-    const sectionVerify = document.getElementById('step2-verify');
-    const sectionDashboard = document.getElementById('step3-dashboard');
+    const sectionRequest = document.getElementById('section-request');
+    const sectionVerify = document.getElementById('section-verify');
+    const sectionDashboard = document.getElementById('section-dashboard');
 
     const chatIdInput = document.getElementById('chatIdInput');
-    const sendCodeBtn = document.getElementById('sendCodeBtn');
+    const getCodeBtn = document.getElementById('getCodeBtn');
     const requestMsg = document.getElementById('requestMsg');
 
     const codeInput = document.getElementById('codeInput');
-    const verifyCodeBtn = document.getElementById('verifyCodeBtn');
+    const verifyBtn = document.getElementById('verifyBtn');
     const verifyMsg = document.getElementById('verifyMsg');
     const resendCodeBtn = document.getElementById('resendCodeBtn');
 
     const displayUserId = document.getElementById('displayUserId');
+
+    // Telegram Web App SDK - Get Referral Code if launched via a link
+    let startParamReferrer = null;
+    if (window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.initDataUnsafe) {
+        startParamReferrer = window.Telegram.WebApp.initDataUnsafe.start_param;
+    }
 
     const modal = document.getElementById('helpModal');
     const howToFindIdBtn = document.getElementById('howToFindId');
@@ -22,7 +28,7 @@ document.addEventListener('DOMContentLoaded', () => {
     let currentChatId = '';
 
     // Check localStorage for existing session
-    const storedUserId = localStorage.getItem('userId');
+    const storedUserId = localStorage.getItem('binshopee_user_id');
     const storedUserName = localStorage.getItem('userName');
     const storedPhotoUrl = localStorage.getItem('photoUrl');
     const storedBalance = localStorage.getItem('balance') || '0';
@@ -37,7 +43,7 @@ document.addEventListener('DOMContentLoaded', () => {
         
         const refLinkInput = document.getElementById('displayReferralLink');
         if (refLinkInput) {
-            refLinkInput.value = `https://t.me/bin_shopee_bot?start=${storedUserId}`;
+            refLinkInput.value = `https://t.me/hit_tips_bot/app?startapp=${storedUserId}`;
         }
 
         if (storedPhotoUrl && storedPhotoUrl !== 'undefined' && storedPhotoUrl !== 'null') {
@@ -69,14 +75,14 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     // Handle Send Code
-    sendCodeBtn.addEventListener('click', async () => {
+    getCodeBtn.addEventListener('click', async () => {
         const chatId = chatIdInput.value.trim();
         if (!chatId) {
             showMessage(requestMsg, 'Please enter your Chat ID', 'error');
             return;
         }
 
-        setLoading(sendCodeBtn, true, 'Sending...');
+        setLoading(getCodeBtn, true, 'Sending...');
 
         try {
             const response = await fetch('/api/send-code', {
@@ -97,25 +103,29 @@ document.addEventListener('DOMContentLoaded', () => {
         } catch (error) {
             showMessage(requestMsg, 'Network error. Please try again.', 'error');
         } finally {
-            setLoading(sendCodeBtn, false, 'Send Verification Code', 'fa-arrow-right');
+            setLoading(getCodeBtn, false, 'Send Verification Code', 'fa-arrow-right');
         }
     });
 
     // Handle Verify Code
-    verifyCodeBtn.addEventListener('click', async () => {
+    verifyBtn.addEventListener('click', async () => {
         const code = codeInput.value.trim();
         if (!code || code.length !== 6) {
             showMessage(verifyMsg, 'Please enter a valid 6-digit code', 'error');
             return;
         }
 
-        setLoading(verifyCodeBtn, true, 'Verifying...');
+        setLoading(verifyBtn, true, 'Verifying...');
 
         try {
             const response = await fetch('/api/verify-code', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ chatId: currentChatId, code })
+                body: JSON.stringify({ 
+                    chatId: currentChatId, 
+                    code,
+                    referrerCode: startParamReferrer // Pass the start_param to backend
+                })
             });
 
             const data = await response.json();
@@ -149,6 +159,10 @@ document.addEventListener('DOMContentLoaded', () => {
                     if (defaultIcon) defaultIcon.style.display = 'none';
                 }
 
+                if (data.referralCode) {
+                    localStorage.setItem('binshopee_ref_code', data.referralCode);
+                }
+
                 loadGlobalSettings();
             } else {
                 showMessage(verifyMsg, data.message || 'Verification failed', 'error');
@@ -171,12 +185,13 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Helper functions
     window.copyReferralLink = function() {
-        const linkInput = document.getElementById('displayReferralLink');
-        if (linkInput) {
-            navigator.clipboard.writeText(linkInput.value).then(() => {
-                alert('Referral Link Copied! Share it with friends to earn USDT.');
-            });
-        }
+        const storedCode = localStorage.getItem('binshopee_ref_code') || localStorage.getItem('binshopee_user_id');
+        const botUsername = 'hit_tips_bot'; // From user screenshot
+        const refLink = `https://t.me/${botUsername}/app?startapp=${storedCode}`;
+        
+        navigator.clipboard.writeText(refLink).then(() => {
+            alert('Referral Link Copied! Share it with friends to earn USDT.');
+        });
     };
 
     async function loadGlobalSettings() {

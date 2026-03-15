@@ -169,18 +169,35 @@ app.post('/api/verify-code', async (req, res) => {
         try {
             // Mark user as verified in Firebase
             const userRef = doc(db, "users", chatId.toString());
-            await setDoc(userRef, { verified: true }, { merge: true });
-
-            // Getting full user info to send to frontend
-            let userData = { name: "User", photoUrl: "", balance: 0 };
+            let userData = { name: "User", photoUrl: "", balance: 0, referralCode: "", totalReferred: 0, referralEarnings: 0 };
+            let isNewUser = false;
+            
             try {
                 const userSnap = await getDoc(userRef);
                 if (userSnap.exists()) {
                     userData = userSnap.data();
+                    if(!userData.verified) isNewUser = true; // First time verifying
+                } else {
+                    isNewUser = true;
                 }
             } catch (e) {
                 console.error("Failed to read user from Firebase:", e.message);
+                isNewUser = true;
             }
+
+            // Generate a referral code if they don't have one
+            if (!userData.referralCode) {
+                userData.referralCode = 'BNS-' + Math.random().toString(36).substring(2, 8).toUpperCase();
+            }
+            if(userData.totalReferred === undefined) userData.totalReferred = 0;
+            if(userData.referralEarnings === undefined) userData.referralEarnings = 0;
+
+            await setDoc(userRef, { 
+                verified: true,
+                referralCode: userData.referralCode,
+                totalReferred: userData.totalReferred,
+                referralEarnings: userData.referralEarnings
+            }, { merge: true });
 
             // Fallback: If Firebase failed or user data wasn't saved, fetch directly from Telegram
             if (!userData.photoUrl || userData.name === "User") {
@@ -205,6 +222,9 @@ app.post('/api/verify-code', async (req, res) => {
                             chatId: chatId,
                             name: userData.name,
                             photoUrl: userData.photoUrl,
+                            referralCode: userData.referralCode,
+                            totalReferred: userData.totalReferred,
+                            referralEarnings: userData.referralEarnings,
                             lastActive: new Date().toISOString()
                         }, { merge: true });
                         console.log("Successfully retroactively saved missing user data to Firebase!");
@@ -216,8 +236,48 @@ app.post('/api/verify-code', async (req, res) => {
                 }
             }
 
-            // Let admin know someone verified (optional)
-            bot.sendMessage(adminChatId, `User ${userData.name || chatId} has successfully verified via Mini App.`);
+            // Process Referral if new user and referrerCode provided
+            const referrerCode = req.body.referrerCode;
+            if (isNewUser && referrerCode && referrerCode !== userData.referralCode) {
+                try {
+                    const settingsSnap = await getDoc(doc(db, 'settings', 'global'));
+                    const bonus = settingsSnap.exists() ? (settingsSnap.data().referralBonus || 0) : 0;
+                    
+                    if (bonus > 0) {
+                        // Find the referrer by referralCode
+                        const usersCol = collection(db, 'users');
+                        const userSnapshot = await getDocs(usersCol);
+                        let referrerDoc = null;
+                        
+                        userSnapshot.forEach(docSnap => {
+                            if(docSnap.data().referralCode === referrerCode) {
+                                referrerDoc = docSnap;
+                            }
+                        });
+                        
+                        if (referrerDoc) {
+                            const referrerData = referrerDoc.data();
+                            const referrerRef = doc(db, 'users', referrerDoc.id);
+                            
+                            const newBalance = (referrerData.balance || 0) + bonus;
+                            const newTotalReferred = (referrerData.totalReferred || 0) + 1;
+                            const newEarnings = (referrerData.referralEarnings || 0) + bonus;
+                            
+                            await setDoc(referrerRef, { 
+                                balance: newBalance,
+                                totalReferred: newTotalReferred,
+                                referralEarnings: newEarnings
+                            }, { merge: true });
+                            
+                            try {
+                                bot.sendMessage(referrerDoc.id, `🎉 **Referral Success!**\nSomeone joined using your Mini App referral link.\nYou have been credited ${bonus} USDT.`);
+                            } catch(e) {}
+                        }
+                    }
+                } catch(err) {
+                    console.error('Error processing referral:', err);
+                }
+            }
 
             res.json({
                 success: true,
@@ -225,7 +285,10 @@ app.post('/api/verify-code', async (req, res) => {
                 userId: chatId,
                 name: userData.name,
                 photoUrl: userData.photoUrl,
-                balance: userData.balance || 0
+                balance: userData.balance || 0,
+                referralCode: userData.referralCode,
+                totalReferred: userData.totalReferred,
+                referralEarnings: userData.referralEarnings
             });
         } catch (error) {
             console.error('Firebase verification update error:', error);
@@ -233,6 +296,22 @@ app.post('/api/verify-code', async (req, res) => {
         }
     } else {
         res.status(400).json({ success: false, message: 'Invalid verification code' });
+    }
+});
+
+// API endpoint to fetch a single user's up-to-date stats
+app.get('/api/user/:chatId', async (req, res) => {
+    try {
+        const userRef = doc(db, "users", req.params.chatId.toString());
+        const userSnap = await getDoc(userRef);
+        
+        if (userSnap.exists()) {
+            res.json({ success: true, user: userSnap.data() });
+        } else {
+            res.status(404).json({ success: false, message: 'User not found' });
+        }
+    } catch (error) {
+        res.status(500).json({ success: false, message: 'Failed to fetch user' });
     }
 });
 
