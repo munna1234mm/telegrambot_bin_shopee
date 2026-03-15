@@ -9,7 +9,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const requestMsg = document.getElementById('requestMsg');
 
     const codeInput = document.getElementById('codeInput');
-    const verifyBtn = document.getElementById('verifyBtn');
+    const verifyBtn = document.getElementById('verifyCodeBtn'); // Fix ID mismatch here
     const verifyMsg = document.getElementById('verifyMsg');
     const resendCodeBtn = document.getElementById('resendCodeBtn');
 
