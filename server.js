@@ -95,19 +95,38 @@ bot.onText(/\/start(?:\s+(.*))?/, async (msg, match) => {
         }, { merge: true });
 
         // Process referral if new user and referrer exists
-        if (isNewUser && referrerId && referrerId !== chatId.toString()) {
+        if (isNewUser && referrerId) {
             const settingsSnap = await getDoc(doc(db, 'settings', 'global'));
             const bonus = settingsSnap.exists() ? (settingsSnap.data().referralBonus || 0) : 0;
             
             if (bonus > 0) {
-                const referrerRef = doc(db, 'users', referrerId.toString());
-                const referrerSnap = await getDoc(referrerRef);
-                if (referrerSnap.exists()) {
-                    const newBalance = (referrerSnap.data().balance || 0) + bonus;
-                    await setDoc(referrerRef, { balance: newBalance }, { merge: true });
-                    bot.sendMessage(referrerId, `🎉 You referred a friend! You have earned ${bonus} USDT.`);
+                // Find referrer by referralCode
+                const usersCol = collection(db, 'users');
+                const userSnapshot = await getDocs(usersCol);
+                let referrerDoc = null;
+                
+                userSnapshot.forEach(docSnap => {
+                    const data = docSnap.data();
+                    if(data.referralCode === referrerId || docSnap.id === referrerId) {
+                        referrerDoc = docSnap;
+                    }
+                });
+
+                if (referrerDoc) {
+                    const referrerData = referrerDoc.data();
+                    const referrerRef = doc(db, 'users', referrerDoc.id);
                     
-                    // Also give starting bonus to new user? Not requested, so skipping.
+                    const newBalance = (referrerData.balance || 0) + bonus;
+                    const newTotalReferred = (referrerData.totalReferred || 0) + 1;
+                    const newEarnings = (referrerData.referralEarnings || 0) + bonus;
+                    
+                    await setDoc(referrerRef, { 
+                        balance: newBalance,
+                        totalReferred: newTotalReferred,
+                        referralEarnings: newEarnings
+                    }, { merge: true });
+                    
+                    bot.sendMessage(referrerDoc.id, `🎉 **Referral Success!**\nSomeone joined the bot using your referral link.\nYou have been credited ${bonus} USDT.`);
                 }
             }
         }
