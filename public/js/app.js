@@ -1,8 +1,8 @@
 document.addEventListener('DOMContentLoaded', () => {
     // UI Elements
-    const sectionRequest = document.getElementById('section-request');
-    const sectionVerify = document.getElementById('section-verify');
-    const sectionDashboard = document.getElementById('section-dashboard');
+    const sectionRequest = document.getElementById('step1-request');
+    const sectionVerify = document.getElementById('step2-verify');
+    const sectionDashboard = document.getElementById('step3-dashboard');
 
     const chatIdInput = document.getElementById('chatIdInput');
     const getCodeBtn = document.getElementById('getCodeBtn');
