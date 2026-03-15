@@ -159,7 +159,7 @@
                 <div class="menu-item" data-target="settings-panel">
                     <i class="fa-solid fa-gear"></i> Settings
                 </div>
-                <div class="menu-item" style="margin-top: auto; color: var(--error-color);">
+                <div id="adminLogoutBtn" class="menu-item" style="margin-top: auto; color: var(--error-color);">
                     <i class="fa-solid fa-right-from-bracket"></i> Logout
                 </div>
             </div>
@@ -557,12 +557,25 @@
                     const data = await res.json();
                     settingsMsg.textContent = data.message;
                     settingsMsg.className = data.success ? 'message success' : 'message error';
+                    if (data.success) {
+                        alert('Settings saved successfully!');
+                        loadSettings(); // Refresh raw view
+                    }
                 } catch(e) {
                     settingsMsg.textContent = 'Error saving';
                     settingsMsg.className = 'message error';
+                    alert('Failed to save settings. Check console.');
                 } finally {
                     saveSettingsBtn.disabled = false;
                     saveSettingsBtn.innerHTML = '<span>Save Settings</span> <i class="fa-solid fa-save"></i>';
+                }
+            });
+
+            // Admin Logout
+            document.getElementById('adminLogoutBtn').addEventListener('click', () => {
+                if(confirm('Logout from Admin Panel?')) {
+                    localStorage.removeItem('adminToken'); // Just in case
+                    window.location.href = '/';
                 }
             });
             loadSettings();

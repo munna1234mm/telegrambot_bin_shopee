@@ -446,13 +446,15 @@ app.get('/api/admin/settings', async (req, res) => {
 app.post('/api/admin/settings', async (req, res) => {
     const { referralBonus } = req.body;
     try {
-        const bonusVal = parseFloat(referralBonus || 0);
+        let bonusVal = parseFloat(referralBonus);
+        if (isNaN(bonusVal)) bonusVal = 0;
+        
         await setDoc(doc(db, 'settings', 'global'), { referralBonus: bonusVal }, { merge: true });
         console.log('Saved settings with bonus:', bonusVal);
         res.json({ success: true, message: 'Settings saved successfully' });
     } catch (error) {
         console.error('Error saving settings:', error.message);
-        res.status(500).json({ success: false, message: 'Failed to save settings' });
+        res.status(500).json({ success: false, message: 'Failed to save settings: ' + error.message });
     }
 });
 
