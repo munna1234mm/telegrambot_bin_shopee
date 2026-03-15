@@ -435,8 +435,10 @@ app.get('/api/admin/settings', async (req, res) => {
     try {
         const settingsSnap = await getDoc(doc(db, 'settings', 'global'));
         let settings = settingsSnap.exists() ? settingsSnap.data() : { referralBonus: 0 };
+        console.log('Fetched settings:', settings);
         res.json({ success: true, settings });
     } catch (error) {
+        console.error('Error fetching settings:', error.message);
         res.status(500).json({ success: false, message: 'Failed to fetch settings' });
     }
 });
@@ -444,9 +446,12 @@ app.get('/api/admin/settings', async (req, res) => {
 app.post('/api/admin/settings', async (req, res) => {
     const { referralBonus } = req.body;
     try {
-        await setDoc(doc(db, 'settings', 'global'), { referralBonus: parseFloat(referralBonus || 0) }, { merge: true });
+        const bonusVal = parseFloat(referralBonus || 0);
+        await setDoc(doc(db, 'settings', 'global'), { referralBonus: bonusVal }, { merge: true });
+        console.log('Saved settings with bonus:', bonusVal);
         res.json({ success: true, message: 'Settings saved successfully' });
     } catch (error) {
+        console.error('Error saving settings:', error.message);
         res.status(500).json({ success: false, message: 'Failed to save settings' });
     }
 });

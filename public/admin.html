@@ -249,6 +249,10 @@
                         </button>
                     </form>
                     <div id="settingsMsg" class="message"></div>
+                    <div style="margin-top: 20px; padding: 10px; background: rgba(0,0,0,0.05); border-radius: 8px;">
+                        <small style="font-weight: bold; display: block; margin-bottom: 5px; color: #666;">Current Raw Data:</small>
+                        <pre id="rawSettings" style="font-size: 0.75rem; white-space: pre-wrap; margin: 0; color: #444;">Loading...</pre>
+                    </div>
                 </div>
 
             </div>
@@ -527,19 +531,28 @@
                     const data = await res.json();
                     if(data.success) {
                         document.getElementById('referralBonusInput').value = data.settings.referralBonus || 0;
+                        document.getElementById('rawSettings').textContent = JSON.stringify(data.settings, null, 2);
+                    } else {
+                        document.getElementById('rawSettings').textContent = 'Error: ' + (data.message || 'Unknown');
                     }
-                } catch(e) {}
+                } catch(e) {
+                    document.getElementById('rawSettings').textContent = 'Error fetching settings';
+                }
             }
 
             settingsForm.addEventListener('submit', async (e) => {
                 e.preventDefault();
                 saveSettingsBtn.disabled = true;
                 saveSettingsBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Saving...';
+                let referralBonus = document.getElementById('referralBonusInput').value || "0";
+                // Handle commas if user uses them as decimal separator
+                referralBonus = referralBonus.toString().replace(',', '.');
+                
                 try {
                     const res = await fetch('/api/admin/settings', {
                         method: 'POST',
                         headers: {'Content-Type': 'application/json'},
-                        body: JSON.stringify({referralBonus: document.getElementById('referralBonusInput').value})
+                        body: JSON.stringify({ referralBonus: parseFloat(referralBonus) })
                     });
                     const data = await res.json();
                     settingsMsg.textContent = data.message;
