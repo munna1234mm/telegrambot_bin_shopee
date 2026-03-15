@@ -126,7 +126,13 @@ bot.onText(/\/start(?:\s+(.*))?/, async (msg, match) => {
                         referralEarnings: newEarnings
                     }, { merge: true });
                     
-                    bot.sendMessage(referrerDoc.id, `🎉 **Referral Success!**\nSomeone joined the bot using your referral link.\nYou have been credited ${bonus} USDT.`);
+                    const refSuccessHtml = `🎊 <b>Referral Success!</b> 🎊
+
+A new user just joined using your referral link!
+You have been credited: <b>+${bonus} USDT</b> 💰
+
+<i>Keep inviting friends to earn more!</i>`;
+                    bot.sendMessage(referrerDoc.id, refSuccessHtml, { parse_mode: 'HTML' });
                 }
             }
         }
@@ -134,7 +140,14 @@ bot.onText(/\/start(?:\s+(.*))?/, async (msg, match) => {
         console.error('Error saving user to Firebase:', error.message);
     }
 
-    bot.sendMessage(chatId, `Welcome, ${firstName}!\nYour Chat ID is: ${chatId}\nPlease use this ID in the Mini App to verify your account.`);
+    const welcomeHtml = `🎉 <b>Welcome to Bin Shopee, ${firstName}!</b> 🎉
+
+Your secure Telegram Chat ID is:
+<code>${chatId}</code>
+
+<i>💡 Please copy this ID and use it in the Mini App to verify your account and start earning!</i>`;
+
+    bot.sendMessage(chatId, welcomeHtml, { parse_mode: 'HTML' });
 });
 
 // API endpoint to request a verification code
@@ -153,7 +166,14 @@ app.post('/api/send-code', async (req, res) => {
             expires: Date.now() + 5 * 60 * 1000
         });
 
-        await bot.sendMessage(chatId, `Your verification code for bin shopee Mini App is: ${code}\nThis code will expire in 5 minutes.`);
+        const codeHtml = `🔐 <b>Verification Required</b>
+
+Your secure login code for Bin Shopee is:
+<code>${code}</code>
+
+<i>⏱ This code will expire in exactly 5 minutes. Do not share it!</i>`;
+
+        await bot.sendMessage(chatId, codeHtml, { parse_mode: 'HTML' });
 
         res.json({ success: true, message: 'Code sent to your Telegram' });
     } catch (error) {
