@@ -15,7 +15,7 @@ const bot = new TelegramBot(botToken, { polling: true });
 
 // Initialize Firebase
 const { initializeApp } = require('firebase/app');
-const { getFirestore, doc, setDoc, getDoc, collection, getDocs, deleteDoc } = require('firebase/firestore/lite');
+const { getFirestore, doc, setDoc, getDoc, collection, getDocs, deleteDoc, query, where } = require('firebase/firestore/lite');
 
 const firebaseConfig = {
     apiKey: "AIzaSyA98AqgNgh67RBCuxh6ee_j0Lh5udTMHj0",
@@ -94,47 +94,9 @@ bot.onText(/\/start(?:\s+(.*))?/, async (msg, match) => {
             lastActive: new Date().toISOString()
         }, { merge: true });
 
-        // Process referral if new user and referrer exists
+        // Store pending referrer if new user
         if (isNewUser && referrerId) {
-            const settingsSnap = await getDoc(doc(db, 'settings', 'global'));
-            const bonus = settingsSnap.exists() ? (settingsSnap.data().referralBonus || 0) : 0;
-            
-            if (bonus > 0) {
-                // Find referrer by referralCode
-                const usersCol = collection(db, 'users');
-                const userSnapshot = await getDocs(usersCol);
-                let referrerDoc = null;
-                
-                userSnapshot.forEach(docSnap => {
-                    const data = docSnap.data();
-                    if(data.referralCode === referrerId || docSnap.id === referrerId) {
-                        referrerDoc = docSnap;
-                    }
-                });
-
-                if (referrerDoc) {
-                    const referrerData = referrerDoc.data();
-                    const referrerRef = doc(db, 'users', referrerDoc.id);
-                    
-                    const newBalance = (referrerData.balance || 0) + bonus;
-                    const newTotalReferred = (referrerData.totalReferred || 0) + 1;
-                    const newEarnings = (referrerData.referralEarnings || 0) + bonus;
-                    
-                    await setDoc(referrerRef, { 
-                        balance: newBalance,
-                        totalReferred: newTotalReferred,
-                        referralEarnings: newEarnings
-                    }, { merge: true });
-                    
-                    const refSuccessHtml = `🎊 <b>Referral Success!</b> 🎊
-
-A new user just joined using your referral link!
-You have been credited: <b>+${bonus} USDT</b> 💰
-
-<i>Keep inviting friends to earn more!</i>`;
-                    bot.sendMessage(referrerDoc.id, refSuccessHtml, { parse_mode: 'HTML' });
-                }
-            }
+            await setDoc(userRef, { pendingReferrer: referrerId }, { merge: true });
         }
     } catch (error) {
         console.error('Error saving user to Firebase:', error.message);
@@ -294,26 +256,32 @@ app.post('/api/verify-code', async (req, res) => {
                 }
             }
 
-            // Process Referral if new user and referrerCode provided
-            const referrerCode = req.body.referrerCode;
-            if (isNewUser && referrerCode && referrerCode !== userData.referralCode) {
+            // Process Referral if new user and not yet processed
+            const referrerCode = req.body.referrerCode || userData.pendingReferrer;
+            if (isNewUser && !userData.referralProcessed && referrerCode && referrerCode !== userData.referralCode) {
                 try {
                     const settingsSnap = await getDoc(doc(db, 'settings', 'global'));
-                    const bonus = settingsSnap.exists() ? (settingsSnap.data().referralBonus || 0) : 0;
+                    const bonus = settingsSnap.exists() ? parseFloat(settingsSnap.data().referralBonus || 0) : 0;
                     
                     if (bonus > 0) {
-                        // Find the referrer by referralCode
-                        const usersCol = collection(db, 'users');
-                        const userSnapshot = await getDocs(usersCol);
+                        // Find the referrer by referralCode OR chatId using a query
                         let referrerDoc = null;
                         
-                        userSnapshot.forEach(docSnap => {
-                            if(docSnap.data().referralCode === referrerCode) {
-                                referrerDoc = docSnap;
-                            }
-                        });
+                        // Try lookup by referralCode
+                        const refQuery = query(collection(db, 'users'), where('referralCode', '==', referrerCode));
+                        const refSnap = await getDocs(refQuery);
                         
-                        if (referrerDoc) {
+                        if (!refSnap.empty) {
+                            referrerDoc = refSnap.docs[0];
+                        } else {
+                            // Secondary lookup by Chat ID (for legacy links)
+                            const idSnap = await getDoc(doc(db, 'users', referrerCode.toString()));
+                            if (idSnap.exists()) {
+                                referrerDoc = idSnap;
+                            }
+                        }
+                        
+                        if (referrerDoc && referrerDoc.id !== chatId.toString()) {
                             const referrerData = referrerDoc.data();
                             const referrerRef = doc(db, 'users', referrerDoc.id);
                             
@@ -327,8 +295,17 @@ app.post('/api/verify-code', async (req, res) => {
                                 referralEarnings: newEarnings
                             }, { merge: true });
                             
+                            // Mark current user as referral processed
+                            await setDoc(userRef, { referralProcessed: true }, { merge: true });
+                            
                             try {
-                                bot.sendMessage(referrerDoc.id, `🎉 **Referral Success!**\nSomeone joined using your Mini App referral link.\nYou have been credited ${bonus} USDT.`);
+                                const bonusMsg = `🎊 <b>Referral Success!</b> 🎊
+
+A new user just joined using your referral link!
+You have been credited: <b>+${bonus} USDT</b> 💰
+
+<i>Keep inviting friends to earn more!</i>`;
+                                bot.sendMessage(referrerDoc.id, bonusMsg, { parse_mode: 'HTML' });
                             } catch(e) {}
                         }
                     }
