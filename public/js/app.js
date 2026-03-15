@@ -19,6 +19,14 @@ document.addEventListener('DOMContentLoaded', () => {
     let startParamReferrer = null;
     if (window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.initDataUnsafe) {
         startParamReferrer = window.Telegram.WebApp.initDataUnsafe.start_param;
+        if (startParamReferrer) {
+            const toast = document.getElementById('referralAppliedToast');
+            const toastText = document.getElementById('referralCodeText');
+            if (toast && toastText) {
+                toastText.textContent = startParamReferrer;
+                toast.style.display = 'block';
+            }
+        }
     }
 
     const modal = document.getElementById('helpModal');
@@ -148,7 +156,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 
                 const refLinkInput = document.getElementById('displayReferralLink');
                 if (refLinkInput) {
-                    refLinkInput.value = `https://t.me/bin_shopee_bot?start=${data.userId}`;
+                    const savedRefCode = data.referralCode || data.userId;
+                    refLinkInput.value = `https://t.me/hit_tips_bot/app?startapp=${savedRefCode}`;
                 }
 
                 if (data.photoUrl) {
@@ -170,7 +179,7 @@ document.addEventListener('DOMContentLoaded', () => {
         } catch (error) {
             showMessage(verifyMsg, 'Network error. Please try again.', 'error');
         } finally {
-            setLoading(verifyCodeBtn, false, 'Verify Account', 'fa-check');
+            setLoading(verifyBtn, false, 'Verify Account', 'fa-check');
         }
     });
 

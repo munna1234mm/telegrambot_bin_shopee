@@ -33,10 +33,15 @@
                 <h3>Verify your Identity</h3>
                 <p class="subtitle">Enter your Telegram Chat ID to receive a verification code.</p>
                 <div class="input-group">
-                    <input type="number" id="chatIdInput" placeholder="e.g., 123456789">
+                    <input type="text" id="chatIdInput" placeholder="Telegram Chat ID" required>
                     <label for="chatIdInput">Telegram Chat ID</label>
                 </div>
-                <button id="sendCodeBtn" class="btn btn-primary">
+                
+                <div id="referralAppliedToast" style="display: none; width: 100%; background: rgba(40, 167, 69, 0.1); color: var(--success-color); padding: 10px; border-radius: 8px; border: 1px dashed var(--success-color); margin-bottom: 10px; font-size: 0.85rem;">
+                    <i class="fa-solid fa-gift"></i> Referral Code Applied: <strong id="referralCodeText"></strong>
+                </div>
+
+                <button id="getCodeBtn" class="btn btn-primary">
                     <span>Send Verification Code</span>
                     <i class="fa-solid fa-arrow-right"></i>
                 </button>
